@@ -9,10 +9,21 @@ namespace NConsole.Options
 
     public abstract class TestFixtureBase : IDisposable
     {
+        private string _prototype;
+
         /// <summary>
         /// Gets or Sets the <see cref="OptionSet"/> Prototype.
         /// </summary>
-        protected string Prototype { get; set; }
+        protected string Prototype
+        {
+            get
+            {
+                Assert.NotNull(_prototype);
+                Assert.NotEmpty(_prototype);
+                return _prototype;
+            }
+            set => _prototype = value;
+        }
 
         protected virtual OptionSet GetOptions()
         {

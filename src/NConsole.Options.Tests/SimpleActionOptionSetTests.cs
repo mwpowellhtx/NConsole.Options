@@ -1,18 +1,19 @@
-﻿using System.Linq;
-
-namespace NConsole.Options
+﻿namespace NConsole.Options
 {
     using Xunit;
     using Xunit.Abstractions;
 
     public class SimpleActionOptionSetTests : OptionSetTestFixtureBase
     {
+        /// <summary>
+        /// Returns the Simple Action Option Set.
+        /// Will bump an internal Counter for every option that we encounter.
+        /// </summary>
+        /// <returns></returns>
         protected override OptionSet GetOptions()
         {
             var count = 0;
             var prototype = Prototype;
-            Assert.NotNull(prototype);
-            Assert.NotEmpty(prototype);
             OptionsVisited[prototype] = count;
             return new OptionSet {{prototype, () => OptionsVisited[prototype] = ++count}};
         }
