@@ -12,6 +12,7 @@ namespace NConsole.Options
     using static Domain;
     using static OptionSet.RegularExpressionNames;
     using static String;
+    using static StringComparison;
 
     /// <inheritdoc />
     public class OptionSet : KeyedCollection<string, Option>
@@ -154,6 +155,16 @@ namespace NConsole.Options
             return this;
         }
 
+        private OptionSet Add(Delegate callback, Func<Option> optionFactory)
+        {
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            return Add(optionFactory.Invoke());
+        }
+
         /// <summary>
         /// Adds the <see cref="Option"/> corresponding with the arguments
         /// to the end of the Collection.
@@ -173,15 +184,10 @@ namespace NConsole.Options
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback callback)
-        {
-            if (callback == null)
-            {
-                throw new ArgumentNullException(nameof(callback));
-            }
-
-            // ReSharper disable once ConvertClosureToMethodGroup
-            return Add(new SimpleActionOption(prototype, description, () => callback.Invoke()));
-        }
+            => Add(callback
+                // ReSharper disable once ConvertClosureToMethodGroup
+                , () => new SimpleActionOption(prototype, description, () => callback.Invoke())
+            );
 
         /// <summary>
         /// Adds the <see cref="Option"/> corresponding with the arguments
@@ -202,15 +208,10 @@ namespace NConsole.Options
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback<string> callback)
-        {
-            if (callback == null)
-            {
-                throw new ArgumentNullException(nameof(callback));
-            }
-
-            // ReSharper disable once ConvertClosureToMethodGroup
-            return Add(new ActionOption<string>(prototype, description, val => callback.Invoke(val)));
-        }
+            => Add(callback
+                // ReSharper disable once ConvertClosureToMethodGroup
+                , () => new ActionOption<string>(prototype, description, s => callback.Invoke(s))
+            );
 
         /// <summary>
         /// Adds the <see cref="Option"/> corresponding with the arguments
@@ -231,14 +232,10 @@ namespace NConsole.Options
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback<string, string> callback)
-        {
-            if (callback == null)
-            {
-                throw new ArgumentNullException(nameof(callback));
-            }
-
-            return Add(new KeyValueActionOption<string, string>(prototype, description, callback));
-        }
+            => Add(callback
+                // ReSharper disable once ConvertClosureToMethodGroup
+                , () => new KeyValueActionOption<string, string>(prototype, description, (k, v) => callback.Invoke(k, v))
+            );
 
         /// <summary>
         /// Adds the <see cref="Option"/> corresponding with the arguments
@@ -259,7 +256,10 @@ namespace NConsole.Options
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add<T>(string prototype, string description, OptionCallback<T> callback)
-            => Add(new ActionOption<T>(prototype, description, callback));
+            => Add(callback
+                // ReSharper disable once ConvertClosureToMethodGroup
+                , () => new ActionOption<T>(prototype, description, v => callback.Invoke(v))
+            );
 
         /// <summary>
         /// Adds the <see cref="Option"/> corresponding with the arguments
@@ -280,7 +280,10 @@ namespace NConsole.Options
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add<TKey, TValue>(string prototype, string description, OptionCallback<TKey, TValue> callback)
-            => Add(new KeyValueActionOption<TKey, TValue>(prototype, description, callback));
+            => Add(callback
+                // ReSharper disable once ConvertClosureToMethodGroup
+                , () => new KeyValueActionOption<TKey, TValue>(prototype, description, (k, v) => callback.Invoke(k, v))
+            );
 
         protected virtual OptionContext CreateOptionContext() => new OptionContext(this);
 
@@ -369,6 +372,7 @@ namespace NConsole.Options
             context.OptionValues.Add(arg);
             context.Option = candidateOption;
             context.Option.Invoke(context);
+
             // TODO: TBD: why are we returning False here as well?
             return false;
         }
@@ -718,7 +722,7 @@ namespace NConsole.Options
                 int start, j = 0;
                 do
                 {
-                    start = description.IndexOf(name, j);
+                    start = description.IndexOf(name, j, InvariantCulture);
                 } while (start >= 0 && j != 0 && description[j++ - 1] == CurlyBracesOpen);
 
                 if (start == -1)
