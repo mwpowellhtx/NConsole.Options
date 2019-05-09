@@ -31,9 +31,6 @@ namespace NConsole.Options
         [Theory, ClassData(typeof(StringActionOptionSetTestCases))]
         public void VerifyVisitedOptions(string prototype, string[] args, string expectedVal, string[] expectedUnprocessed)
         {
-            Assert.NotNull(prototype);
-            Assert.NotEmpty(prototype);
-
             Prototype = prototype;
 
             var actualUnprocessed = Options.Parse(args).ToArray();

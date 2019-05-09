@@ -33,9 +33,6 @@
         [Theory, ClassData(typeof(SimpleActionOptionSetTestCases))]
         public void VerifyVisitedOptions(string prototype, string[] args, int expectedCount, string[] expectedUnprocessed)
         {
-            Assert.NotNull(prototype);
-            Assert.NotEmpty(prototype);
-
             Prototype = prototype;
 
             var actualUnprocessed = Options.Parse(args).ToArray();
