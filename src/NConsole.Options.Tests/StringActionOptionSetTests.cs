@@ -6,7 +6,8 @@ namespace NConsole.Options
     using Xunit.Abstractions;
     using static String;
 
-    public class StringActionOptionSetTests : ActionOptionSetTestFixtureBase<string>
+    // TODO: TBD: this one is perhaps closer to the typed version, excepting for the string-based GetOptions override...
+    public class StringActionOptionSetTests : TypedActionOptionSetTestFixtureBase<string>
     {
         protected override OptionSet GetOptions()
         {
@@ -20,7 +21,7 @@ namespace NConsole.Options
         {
         }
 
-        // TODO: TBD: could potentially capture an Expected Value generic type here, if it does not get too complicated to do so.
+#pragma warning disable xUnit1008
         /// <summary>
         /// 
         /// </summary>
@@ -28,18 +29,10 @@ namespace NConsole.Options
         /// <param name="args"></param>
         /// <param name="expectedVal"></param>
         /// <param name="expectedUnprocessed"></param>
-        [Theory, ClassData(typeof(StringActionOptionSetTestCases))]
-        public void VerifyVisitedOptions(string prototype, string[] args, string expectedVal, string[] expectedUnprocessed)
-        {
-            Prototype = prototype;
+        [ClassData(typeof(StringActionOptionSetTestCases))]
+        public override void VerifyVisitedOptions(string prototype, string[] args, string expectedVal, string[] expectedUnprocessed)
+            => base.VerifyVisitedOptions(prototype, args, expectedVal, expectedUnprocessed);
+#pragma warning restore xUnit1008
 
-            var actualUnprocessed = Options.Parse(args).ToArray();
-
-            Assert.NotNull(actualUnprocessed);
-            Assert.Equal(expectedUnprocessed, actualUnprocessed);
-
-            Assert.True(OptionsVisited.TryGetValue(prototype, out var actualVal));
-            Assert.Equal(expectedVal, Assert.IsType<string>(actualVal));
-        }
     }
 }
