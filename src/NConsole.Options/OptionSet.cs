@@ -208,7 +208,8 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(callback));
             }
 
-            return Add(new ValueCollectionActionOption(prototype, description, 1, val => callback.Invoke(val[0])));
+            // ReSharper disable once ConvertClosureToMethodGroup
+            return Add(new ActionOption<string>(prototype, description, val => callback.Invoke(val)));
         }
 
         /// <summary>
