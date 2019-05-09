@@ -190,8 +190,8 @@ namespace NConsole.Options
             );
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="ActionOption{TTarget}"/> corresponding with the arguments to the
+        /// end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="callback"></param>
@@ -200,46 +200,19 @@ namespace NConsole.Options
             => Add(prototype, null, callback);
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="ActionOption{TTarget}"/> corresponding with the arguments to the
+        /// end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
         /// <param name="callback"></param>
         /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback<string> callback)
-            => Add(callback
-                // ReSharper disable once ConvertClosureToMethodGroup
-                , () => new ActionOption<string>(prototype, description, s => callback.Invoke(s))
-            );
+            => Add<string>(prototype, description, callback);
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="callback"></param>
-        /// <returns></returns>
-        public OptionSet Add(string prototype, OptionCallback<string, string> callback)
-            => Add(prototype, null, callback);
-
-        /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="description"></param>
-        /// <param name="callback"></param>
-        /// <returns></returns>
-        public OptionSet Add(string prototype, string description, OptionCallback<string, string> callback)
-            => Add(callback
-                // ReSharper disable once ConvertClosureToMethodGroup
-                , () => new KeyValueActionOption<string, string>(prototype, description, (k, v) => callback.Invoke(k, v))
-            );
-
-        /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="ActionOption{TTarget}"/> corresponding with the arguments to the
+        /// end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="callback"></param>
@@ -248,8 +221,8 @@ namespace NConsole.Options
             => Add(prototype, null, callback);
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="ActionOption{TTarget}"/> corresponding with the arguments to the
+        /// end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
@@ -262,8 +235,29 @@ namespace NConsole.Options
             );
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="KeyValueActionOption{TKey,TValue}"/> corresponding with the
+        /// arguments to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        public OptionSet Add(string prototype, OptionCallback<string, string> callback)
+            => Add(prototype, null, callback);
+
+        /// <summary>
+        /// Adds the <see cref="KeyValueActionOption{TKey,TValue}"/> corresponding with the
+        /// arguments to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        public OptionSet Add(string prototype, string description, OptionCallback<string, string> callback)
+            => Add<string, string>(prototype, description, callback);
+
+        /// <summary>
+        /// Adds the <see cref="KeyValueActionOption{TKey,TValue}"/> corresponding with the
+        /// arguments to the end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="callback"></param>
@@ -272,8 +266,8 @@ namespace NConsole.Options
             => Add(prototype, null, callback);
 
         /// <summary>
-        /// Adds the <see cref="Option"/> corresponding with the arguments
-        /// to the end of the Collection.
+        /// Adds the <see cref="KeyValueActionOption{TKey,TValue}"/> corresponding with the
+        /// arguments to the end of the Collection.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
