@@ -14,11 +14,13 @@
 
   <PropertyGroup>
     <PackageProjectUrl>http://github.com/mwpowellhtx/Code.Generator.Roslyn</PackageProjectUrl>
+    <!--<PackageLicense>https://github.com/mwpowellhtx/Code.Generator.Roslyn/blob/master/LICENSE</PackageLicense>-->
     <PackageLicenseUrl>https://github.com/mwpowellhtx/Code.Generator.Roslyn/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup>
     <RootNamespace>NConsole.Options</RootNamespace>
+    <XunitVersion>2.4.1</XunitVersion>
   </PropertyGroup>
 
   <ItemGroup>
