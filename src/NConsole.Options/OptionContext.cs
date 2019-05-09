@@ -2,19 +2,34 @@
 {
     public class OptionContext
     {
+        /// <summary>
+        /// Gets the OptionValues.
+        /// </summary>
         public OptionValueCollection OptionValues { get; }
 
+        /// <summary>
+        /// Gets the Option.
+        /// </summary>
         public Option Option { get; set; }
 
-        public string OptionName { get; set; }
+        /// <summary>
+        /// Gets the Option Name.
+        /// </summary>
+        public string OptionName { get; internal set; }
 
-        public int OptionIndex { get; set; }
+        /// <summary>
+        /// Gets the OptionIndex.
+        /// </summary>
+        public int OptionIndex { get; internal set; }
 
-        public OptionSet OptionSet { get; set; }
+        /// <summary>
+        /// Gets the Set.
+        /// </summary>
+        public OptionSet Set { get; internal set; }
 
-        public OptionContext(OptionSet optionSet)
+        internal OptionContext(OptionSet optionSet)
         {
-            OptionSet = optionSet;
+            Set = optionSet;
             OptionValues = new OptionValueCollection(this);
         }
     }

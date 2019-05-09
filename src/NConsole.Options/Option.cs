@@ -9,18 +9,39 @@ namespace NConsole.Options
     using static Domain;
     using static String;
 
+    /// <summary>
+    /// Represents an Option asset concern.
+    /// </summary>
     public abstract class Option
     {
+        /// <summary>
+        /// Gets the Prototype.
+        /// </summary>
         public string Prototype { get; }
 
+        /// <summary>
+        /// Gets the Description.
+        /// </summary>
         public string Description { get; }
 
+        /// <summary>
+        /// Gets the ValueType.
+        /// </summary>
         public OptionValueType ValueType { get; }
 
+        /// <summary>
+        /// Gets the MaximumValueCount.
+        /// </summary>
         public int MaximumValueCount { get; }
 
+        /// <summary>
+        /// Gets the Names.
+        /// </summary>
         internal string[] Names { get; }
 
+        /// <summary>
+        /// Gets the ValueSeparators.
+        /// </summary>
         internal string[] ValueSeparators { get; private set; }
 
         /// <summary>
@@ -28,11 +49,23 @@ namespace NConsole.Options
         /// </summary>
         private char[] NameTerminator { get; } = {Equal, Colon};
 
+        /// <summary>
+        /// Protected Constructor.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <inheritdoc />
         protected Option(string prototype, string description)
             : this(prototype, description, 1)
         {
         }
 
+        /// <summary>
+        /// Protected Constructor.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="maximumValueCount"></param>
         protected Option(string prototype, string description, int maximumValueCount)
         {
             if (prototype == null)
@@ -40,7 +73,7 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(prototype));
             }
 
-            if (!prototype.Any())
+            if (IsNullOrEmpty(prototype))
             {
                 throw new ArgumentException("Cannot be the empty string.", nameof(prototype));
             }
@@ -91,6 +124,13 @@ namespace NConsole.Options
 
         public string[] GetValueSeparators() => ValueSeparators == null ? new string[] { } : (string[]) ValueSeparators.Clone();
 
+        /// <summary>
+        /// Parses the <paramref name="value"/> given the <paramref name="context"/>.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
         protected static T Parse<T>(string value, OptionContext context)
         {
             T GetDefaultValue(out Type x)
@@ -121,7 +161,7 @@ namespace NConsole.Options
             {
                 throw new OptionException(
                     Format(
-                        context.OptionSet.MessageLocalizer("Could not convert string `{0}' to type {1} for option `{2}'."),
+                        context.Set.Localizer("Could not convert string `{0}' to type {1} for option `{2}'."),
                         value, targetType.Name, context.OptionName),
                     context.OptionName, ex);
             }
@@ -129,6 +169,11 @@ namespace NConsole.Options
             return defaultValue;
         }
 
+        /// <summary>
+        /// Parses the <see cref="OptionValueType"/> given the <paramref name="prototype"/>.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <returns></returns>
         private OptionValueType ParsePrototype(string prototype)
         {
             char? parsedType = null;
@@ -201,6 +246,13 @@ namespace NConsole.Options
         }
 
         // ReSharper disable once UnusedParameter.Local
+        /// <summary>
+        /// Adds <paramref name="separators"/>.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="name"></param>
+        /// <param name="end"></param>
+        /// <param name="separators"></param>
         private void AddSeparators(string prototype, string name, int end, ICollection<string> separators)
         {
             var start = -1;
@@ -249,15 +301,23 @@ namespace NConsole.Options
             }
         }
 
+        /// <summary>
+        /// Invokes the Option given the <paramref name="context"/>.
+        /// </summary>
+        /// <param name="context"></param>
         public void Invoke(OptionContext context)
         {
-            OnParsed(context);
+            OnInvocation(context);
             context.OptionName = null;
             context.Option = null;
             context.OptionValues.Clear();
         }
 
-        protected abstract void OnParsed(OptionContext context);
+        /// <summary>
+        /// Occurs in an Option specific manner given <paramref name="context"/>.
+        /// </summary>
+        /// <param name="context"></param>
+        protected abstract void OnInvocation(OptionContext context);
 
         public override string ToString() => Prototype;
     }

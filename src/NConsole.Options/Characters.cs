@@ -1,5 +1,8 @@
 ﻿namespace NConsole.Options
 {
+    /// <summary>
+    /// Provides several useful <see cref="char"/> based constant assets.
+    /// </summary>
     internal static class Characters
     {
         /// <summary>

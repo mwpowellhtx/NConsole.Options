@@ -206,7 +206,7 @@ namespace NConsole.Options
                 if (option.ValueType == OptionValueType.Required && index >= values.Count)
                 {
                     throw new OptionException(Format(
-                            Context.OptionSet.MessageLocalizer("Missing required value for option `{0}'.")
+                            Context.Set.Localizer("Missing required value for option `{0}'.")
                             , Context.OptionName)
                         , Context.OptionName);
 

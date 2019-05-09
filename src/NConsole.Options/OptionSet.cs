@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-//using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,21 +13,36 @@ namespace NConsole.Options
     using static OptionSet.RegularExpressionNames;
     using static String;
 
+    /// <inheritdoc />
     public class OptionSet : KeyedCollection<string, Option>
     {
+        /// <summary>
+        /// Default Constructor.
+        /// </summary>
+        /// <inheritdoc />
         public OptionSet() : this(s => s)
         {
         }
 
         // ReSharper disable IdentifierTypo
-        public OptionSet(Converter<string, string> messageLocalizer)
+        /// <summary>
+        /// <see cref="Converter{TInput,TOutput}"/> Constructor.
+        /// </summary>
+        /// <param name="localizer"></param>
+        /// <inheritdoc />
+        public OptionSet(Converter<string, string> localizer)
         {
-            MessageLocalizer = messageLocalizer;
+            Localizer = localizer;
         }
 
-        public Converter<string, string> MessageLocalizer { get; }
+        // ReSharper disable once CommentTypo
+        /// <summary>
+        /// Gets the MessageLocalizer.
+        /// </summary>
+        public Converter<string, string> Localizer { get; }
         // ReSharper restore IdentifierTypo
 
+        /// <inheritdoc />
         protected override string GetKeyForItem(Option item)
         {
             var option = item;
@@ -54,7 +68,6 @@ namespace NConsole.Options
         //    {
         //        throw new ArgumentNullException(nameof(option));
         //    }
-
         //    try
         //    {
         //        return base[option];
@@ -66,12 +79,14 @@ namespace NConsole.Options
         //    }
         //}
 
+        /// <inheritdoc />
         protected override void InsertItem(int index, Option item)
         {
             base.InsertItem(index, item);
             AddOption(item);
         }
 
+        /// <inheritdoc />
         protected override void RemoveItem(int index)
         {
             base.RemoveItem(index);
@@ -83,6 +98,7 @@ namespace NConsole.Options
             }
         }
 
+        /// <inheritdoc />
         protected override void SetItem(int index, Option item)
         {
             base.SetItem(index, item);
@@ -90,6 +106,10 @@ namespace NConsole.Options
             AddOption(item);
         }
 
+        /// <summary>
+        /// Adds the <paramref name="option"/> to the end of the Collection.
+        /// </summary>
+        /// <param name="option"></param>
         private void AddOption(Option option)
         {
             if (option == null)
@@ -118,15 +138,69 @@ namespace NConsole.Options
             }
         }
 
+        /// <summary>
+        /// Adds an <paramref name="option"/> to the end of the Collection. Note that mask
+        /// the Add API here because we do not want the base class handling any arbitrary
+        /// <see cref="Option"/> requests, even though the constructors are internal. Also,
+        /// because we want the API to return the <see cref="OptionSet"/> instance.
+        /// </summary>
+        /// <param name="option">The <see cref="Option"/> to be added to the end
+        /// of the Collection.</param>
+        /// <returns></returns>
+        /// <see cref="Collection{T}.Add"/>
         public new OptionSet Add(Option option)
         {
             base.Add(option);
             return this;
         }
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        public OptionSet Add(string prototype, OptionCallback callback)
+            => Add(prototype, null, callback);
+
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        public OptionSet Add(string prototype, string description, OptionCallback callback)
+        {
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            // ReSharper disable once ConvertClosureToMethodGroup
+            return Add(new SimpleActionOption(prototype, description, () => callback.Invoke()));
+        }
+
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add(string prototype, OptionCallback<string> callback)
             => Add(prototype, null, callback);
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback<string> callback)
         {
             if (callback == null)
@@ -134,12 +208,27 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(callback));
             }
 
-            return Add(new ActionOption(prototype, description, 1, val => callback(val[0])));
+            return Add(new ValueCollectionActionOption(prototype, description, 1, val => callback.Invoke(val[0])));
         }
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add(string prototype, OptionCallback<string, string> callback)
             => Add(prototype, null, callback);
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add(string prototype, string description, OptionCallback<string, string> callback)
         {
             if (callback == null)
@@ -147,34 +236,77 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(callback));
             }
 
-            return Add(new ActionOption(prototype, description, 2, val => callback(val[0], val[1])));
+            return Add(new KeyValueActionOption<string, string>(prototype, description, callback));
         }
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add<T>(string prototype, OptionCallback<T> callback)
             => Add(prototype, null, callback);
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add<T>(string prototype, string description, OptionCallback<T> callback)
             => Add(new ActionOption<T>(prototype, description, callback));
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add<TKey, TValue>(string prototype, OptionCallback<TKey, TValue> callback)
             => Add(prototype, null, callback);
 
+        /// <summary>
+        /// Adds the <see cref="Option"/> corresponding with the arguments
+        /// to the end of the Collection.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public OptionSet Add<TKey, TValue>(string prototype, string description, OptionCallback<TKey, TValue> callback)
-            => Add(new ActionOption<TKey, TValue>(prototype, description, callback));
+            => Add(new KeyValueActionOption<TKey, TValue>(prototype, description, callback));
 
         protected virtual OptionContext CreateOptionContext() => new OptionContext(this);
 
-        public List<string> Parse(IEnumerable<string> args)
+        /// <summary>
+        /// Parses the <paramref name="args"/> and returns any Unprocessed Arguments encountered
+        /// during the operation. Calling this method is the nerve center of starting the
+        /// <see cref="Option"/> collection being parsed, doing something with them in the
+        /// scope of your application.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public List<string> Parse(params string[] args)
         {
+            // TODO: TBD: this is when we use context? any other time? should it be disposable in any way?
+            // TODO: TBD: I am thinking that "context" should potentially be more broadly cross-cutting than that...
+            // TODO: TBD: the reason being is that there are moment in the Option, callbacks, etc, where there are strings which could benefit from localization...
             var context = CreateOptionContext();
+            // TODO: TBD: consider how Context itself should be responsible for processing across the range of option set... ?
+            // TODO: TBD: would be a subtle, but potentially worthwhile, refactoring, that inverts the control, provides opportunities for functional injection, etc
             context.OptionIndex = -1;
             var process = true;
+            var defaultOption = Contains(AngleBrackets) ? this[AngleBrackets] : null;
             var unprocessed = new List<string>();
-            var def = Contains(AngleBrackets) ? this[AngleBrackets] : null;
             foreach (var arg in args)
             {
                 ++context.OptionIndex;
-                if (arg == $"{Dash}{Dash}")
+                if (arg == DoubleDash)
                 {
                     process = false;
                     continue;
@@ -183,13 +315,13 @@ namespace NConsole.Options
                 // TODO: TBD: ism's like, !process, !parse, falling through to `Unprocessed', just refactor that to a more natural course of evaluation, sequence of TryProcess...
                 if (!process)
                 {
-                    Unprocessed(unprocessed, def, context, arg);
+                    TryProcessArgument(arg, defaultOption, context, unprocessed);
                     continue;
                 }
 
-                if (!Parse(arg, context))
+                if (!TryParse(arg, context))
                 {
-                    Unprocessed(unprocessed, def, context, arg);
+                    TryProcessArgument(arg, defaultOption, context, unprocessed);
                 }
             }
 
@@ -217,18 +349,26 @@ namespace NConsole.Options
         //    return r;
         //}
 
-        private static bool Unprocessed(ICollection<string> extra, Option def, OptionContext context, string arg)
+        /// <summary>
+        /// Tries to Process the <paramref name="arg"/> given the parameters.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <param name="candidateOption"></param>
+        /// <param name="context"></param>
+        /// <param name="remaining"></param>
+        /// <returns></returns>
+        private static bool TryProcessArgument(string arg, Option candidateOption, OptionContext context, ICollection<string> remaining)
         {
-            if (def == null)
+            if (candidateOption == null)
             {
-                extra.Add(arg);
+                remaining.Add(arg);
                 return false;
             }
 
             context.OptionValues.Add(arg);
-            context.Option = def;
-
+            context.Option = candidateOption;
             context.Option.Invoke(context);
+            // TODO: TBD: why are we returning False here as well?
             return false;
         }
 
@@ -262,7 +402,7 @@ namespace NConsole.Options
             , RegexOptions.Compiled
         );
 
-        protected bool GetOptionParts(string arg, out string flagResult
+        protected bool TryGetOptionParts(string arg, out string flagResult
             , out string nameResult, out string sepResult, out string valResult)
         {
             if (arg == null)
@@ -280,6 +420,7 @@ namespace NConsole.Options
             flagResult = m.Groups[flag].Value;
             nameResult = m.Groups[name].Value;
 
+            // ReSharper disable once InvertIf
             if (m.Groups[sep].Success && m.Groups[val].Success)
             {
                 sepResult = m.Groups[sep].Value;
@@ -289,7 +430,7 @@ namespace NConsole.Options
             return true;
         }
 
-        protected virtual bool Parse(string arg, OptionContext context)
+        protected virtual bool TryParse(string arg, OptionContext context)
         {
             if (context.Option != null)
             {
@@ -297,15 +438,17 @@ namespace NConsole.Options
                 return true;
             }
 
-            if (!GetOptionParts(arg, out var flag, out var name, out var sep, out var val))
+            if (!TryGetOptionParts(arg, out var flag, out var name, out var sep, out var val))
             {
                 return false;
             }
 
+            // ReSharper disable once InvertIf
             if (Contains(name))
             {
                 var option = this[name];
-                context.OptionName = flag + name;
+
+                context.OptionName = $"{flag}{name}";
                 context.Option = option;
 
                 // ReSharper disable once SwitchStatementMissingSomeCases
@@ -351,9 +494,9 @@ namespace NConsole.Options
             }
             else if (context.OptionValues.Count > context.Option.MaximumValueCount)
             {
-                throw new OptionException(Format(MessageLocalizer(
-                            "Error: Found `{0}' option values when expecting `{1}'."),
-                        context.OptionValues.Count, context.Option.MaximumValueCount),
+                throw new OptionException(Format(
+                        Localizer("Error: Found `{0}' option values when expecting `{1}'.")
+                        , context.OptionValues.Count, context.Option.MaximumValueCount),
                     context.OptionName);
             }
         }
@@ -399,8 +542,9 @@ namespace NConsole.Options
                         return false;
                     }
 
-                    throw new OptionException(Format(MessageLocalizer(
-                            "Cannot bundle unregistered option `{0}'."), optionText)
+                    throw new OptionException(Format(
+                            Localizer("Cannot bundle unregistered option `{0}'.")
+                            , optionText)
                         , optionText);
                 }
 
@@ -462,7 +606,9 @@ namespace NConsole.Options
 
                 var indent = false;
                 var prefix = new string(Space, OptionWidth + 2);
-                foreach (var line in GetLines(MessageLocalizer(GetDescription(option.Description))))
+                foreach (var line in GetLines(
+                    Localizer(GetDescription(option.Description))
+                ))
                 {
                     if (indent)
                     {
@@ -508,11 +654,11 @@ namespace NConsole.Options
                 {
                     if (option.ValueType == OptionValueType.Optional)
                     {
-                        Write(writer, ref written, MessageLocalizer($"{SquareBracketOpen}"));
+                        Write(writer, ref written, Localizer($"{SquareBracketOpen}"));
                     }
 
-                    Write(writer, ref written,
-                        MessageLocalizer($"{Equal}{GetArgumentName(0, option.MaximumValueCount, option.Description)}"));
+                    Write(writer, ref written
+                        , Localizer($"{Equal}{GetArgumentName(0, option.MaximumValueCount, option.Description)}"));
 
                     var sep = option.ValueSeparators != null && option.ValueSeparators.Length > 0
                         ? option.ValueSeparators[0]
@@ -521,13 +667,13 @@ namespace NConsole.Options
                     for (var c = 1; c < option.MaximumValueCount; ++c)
                     {
                         Write(writer, ref written,
-                            MessageLocalizer(
-                                $"{sep}{GetArgumentName(c, option.MaximumValueCount, option.Description)}"));
+                            Localizer($"{sep}{GetArgumentName(c, option.MaximumValueCount, option.Description)}")
+                        );
                     }
 
                     if (option.ValueType == OptionValueType.Optional)
                     {
-                        Write(writer, ref written, MessageLocalizer($"{SquareBracketClose}"));
+                        Write(writer, ref written, Localizer($"{SquareBracketClose}"));
                     }
 
                     break;
