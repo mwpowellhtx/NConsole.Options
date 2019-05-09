@@ -6,7 +6,7 @@ namespace NConsole.Options
     using Xunit.Abstractions;
     using static String;
 
-    public class StringActionOptionSetTestFixtureBase : ActionOptionSetTestFixtureBase<string>
+    public class StringActionOptionSetTests : ActionOptionSetTestFixtureBase<string>
     {
         protected override OptionSet GetOptions()
         {
@@ -15,7 +15,7 @@ namespace NConsole.Options
             return new OptionSet {{prototype, s => OptionsVisited[prototype] = s}};
         }
 
-        public StringActionOptionSetTestFixtureBase(ITestOutputHelper outputHelper)
+        public StringActionOptionSetTests(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
         }
