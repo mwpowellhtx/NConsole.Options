@@ -9,12 +9,7 @@ namespace NConsole.Options
     // TODO: TBD: this one is perhaps closer to the typed version, excepting for the string-based GetOptions override...
     public class StringActionOptionSetTests : TypedActionOptionSetTestFixtureBase<string>
     {
-        protected override OptionSet GetOptions()
-        {
-            var prototype = Prototype;
-            OptionsVisited[prototype] = Empty;
-            return new OptionSet {{prototype, s => OptionsVisited[prototype] = s}};
-        }
+        protected override string DefaultValue => Empty;
 
         public StringActionOptionSetTests(ITestOutputHelper outputHelper)
             : base(outputHelper)

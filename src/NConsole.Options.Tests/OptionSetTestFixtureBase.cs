@@ -4,11 +4,11 @@ namespace NConsole.Options
 {
     using Xunit.Abstractions;
 
-    public abstract class OptionSetTestFixtureBase : TestFixtureBase<OptionSet>
+    public abstract class OptionSetTestFixtureBase<TKey> : TestFixtureBase<OptionSet>
     {
         // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-        protected IDictionary<string, object> OptionsVisited { get; }
-            = new Dictionary<string, object> { };
+        protected IDictionary<TKey, object> OptionsVisited { get; }
+            = new Dictionary<TKey, object> { };
 
         protected OptionSetTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)

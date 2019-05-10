@@ -16,5 +16,9 @@ namespace NConsole.Options
         }
 
         protected override string RenderTypedValue(bool value) => $"{value}".ToLower();
+
+        private static IEnumerable<object[]> _privateCases;
+
+        protected override IEnumerable<object[]> Cases => _privateCases ?? (_privateCases = base.Cases);
     }
 }

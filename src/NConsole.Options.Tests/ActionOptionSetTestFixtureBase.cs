@@ -2,7 +2,7 @@
 {
     using Xunit.Abstractions;
 
-    public abstract class ActionOptionSetTestFixtureBase<T> : OptionSetTestFixtureBase
+    public abstract class ActionOptionSetTestFixtureBase<T> : OptionSetTestFixtureBase<string>
     {
         protected ActionOptionSetTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)

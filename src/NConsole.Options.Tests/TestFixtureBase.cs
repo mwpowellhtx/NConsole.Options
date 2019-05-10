@@ -9,32 +9,26 @@ namespace NConsole.Options
 
     public abstract class TestFixtureBase : IDisposable
     {
-        private string _prototype;
-
-        /// <summary>
-        /// Gets or Sets the <see cref="OptionSet"/> Prototype.
-        /// </summary>
-        protected string Prototype
-        {
-            get
-            {
-                Assert.NotNull(_prototype);
-                Assert.NotEmpty(_prototype);
-                return _prototype;
-            }
-            set => _prototype = value;
-        }
-
-        protected virtual OptionSet GetOptions()
+        protected virtual OptionSet RegisterOptions(Action<OptionSet> initializer = null)
         {
             // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-            return new OptionSet { };
+            var options = new OptionSet { };
+            initializer?.Invoke(options);
+            return options;
         }
 
-        private OptionSet _options;
+        protected static void VerifyOption<T>(Option option, string prototype, OptionValueType valueType)
+            where T : Option
+            => VerifyOption<T>(option, prototype, null, valueType);
 
-        // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-        protected OptionSet Options => _options ?? (_options = GetOptions());
+        protected static void VerifyOption<T>(Option option, string prototype, string description, OptionValueType valueType)
+            where T : Option
+        {
+            var x = option.AssertNotNull().AssertIsType<T>();
+            x.Prototype.AssertEqual(prototype);
+            x.Description.AssertEqual(description);
+            x.ValueType.AssertEqual(valueType);
+        }
 
         protected ITestOutputHelper OutputHelper { get; }
 
@@ -109,11 +103,12 @@ namespace NConsole.Options
             return context;
         }
 
-        protected void VerifyContext(Action<OptionContext> callback)
+        // TODO: TBD: this one is necessary? how much "context" can be exposed for verification?
+        protected void VerifyContext(OptionSet options, Action<OptionContext> callback)
         {
             Assert.NotNull(callback);
 
-            var context = new OptionContext(Options);
+            var context = new OptionContext(options);
 
             callback(context);
         }

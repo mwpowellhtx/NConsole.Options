@@ -32,13 +32,18 @@ namespace NConsole.Options
                         var dashDashShort = $"{Dash}{Dash}{parts[0]}";
                         var dashDashLong = $"{Dash}{Dash}{parts[1]}";
 
+                        var slashShort = $"{Slash}{parts[0]}";
+                        var slashLong = $"{Slash}{parts[1]}";
+
                         foreach (var count in GetRange(1, 3))
                         {
                             var dashShortRange = GetRepeatedRange(dashShort, count).ToArray();
                             var dashDashShortRange = GetRepeatedRange(dashDashShort, count).ToArray();
+                            var slashShortRange = GetRepeatedRange(slashShort, count).ToArray();
 
                             var dashLongRange = GetRepeatedRange(dashLong, count).ToArray();
                             var dashDashLongRange = GetRepeatedRange(dashDashLong, count).ToArray();
+                            var slashLongRange = GetRepeatedRange(slashLong, count).ToArray();
 
                             var filteredCount = FilterCount(count);
 
@@ -49,6 +54,8 @@ namespace NConsole.Options
                                     yield return GetRange<object>(dashDashShortRange, filteredCount, emptyRange).ToArray();
                                     yield return GetRange<object>(dashLongRange, filteredCount, emptyRange).ToArray();
                                     yield return GetRange<object>(dashDashLongRange, filteredCount, emptyRange).ToArray();
+                                    yield return GetRange<object>(slashShortRange, filteredCount, emptyRange).ToArray();
+                                    yield return GetRange<object>(slashLongRange, filteredCount, emptyRange).ToArray();
                                     break;
 
                                 default:
@@ -56,6 +63,8 @@ namespace NConsole.Options
                                     yield return GetRange<object>(dashDashShortRange, filteredCount, dashDashShortRange).ToArray();
                                     yield return GetRange<object>(dashLongRange, filteredCount, dashLongRange).ToArray();
                                     yield return GetRange<object>(dashDashLongRange, filteredCount, dashDashLongRange).ToArray();
+                                    yield return GetRange<object>(slashShortRange, filteredCount, slashShortRange).ToArray();
+                                    yield return GetRange<object>(slashLongRange, filteredCount, slashLongRange).ToArray();
                                     break;
                             }
                         }

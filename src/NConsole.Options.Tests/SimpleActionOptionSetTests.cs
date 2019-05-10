@@ -3,21 +3,8 @@
     using Xunit;
     using Xunit.Abstractions;
 
-    public class SimpleActionOptionSetTests : OptionSetTestFixtureBase
+    public class SimpleActionOptionSetTests : OptionSetTestFixtureBase<string>
     {
-        /// <summary>
-        /// Returns the Simple Action Option Set.
-        /// Will bump an internal Counter for every option that we encounter.
-        /// </summary>
-        /// <returns></returns>
-        protected override OptionSet GetOptions()
-        {
-            var count = 0;
-            var prototype = Prototype;
-            OptionsVisited[prototype] = count;
-            return new OptionSet {{prototype, () => OptionsVisited[prototype] = ++count}};
-        }
-
         public SimpleActionOptionSetTests(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
@@ -33,12 +20,15 @@
         [Theory, ClassData(typeof(SimpleActionOptionSetTestCases))]
         public void VerifyVisitedOptions(string prototype, string[] args, int expectedCount, string[] expectedUnprocessed)
         {
-            Prototype = prototype;
+            var count = 0;
 
-            var actualUnprocessed = Options.Parse(args).ToArray();
+            var options = RegisterOptions(o =>
+            {
+                OptionsVisited[prototype] = count;
+                o.Add(prototype, () => OptionsVisited[prototype] = ++count);
+            });
 
-            Assert.NotNull(actualUnprocessed);
-            Assert.Equal(expectedUnprocessed, actualUnprocessed);
+            options.Parse(args).ToArray().AssertNotNull().AssertEqual(expectedUnprocessed);
 
             Assert.True(OptionsVisited.TryGetValue(prototype, out var actualCount));
             Assert.Equal(expectedCount, Assert.IsType<int>(actualCount));

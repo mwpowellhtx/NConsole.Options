@@ -13,5 +13,9 @@ namespace NConsole.Options
         }
 
         protected override string RenderTypedValue(Guid value) => $"{value:N}";
+
+        private static IEnumerable<object[]> _privateCases;
+
+        protected override IEnumerable<object[]> Cases => _privateCases ?? (_privateCases = base.Cases);
     }
 }
