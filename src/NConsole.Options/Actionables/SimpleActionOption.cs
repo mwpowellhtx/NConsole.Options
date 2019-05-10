@@ -8,11 +8,11 @@
     {
         /// <inheritdoc />
         public SimpleActionOption(string prototype, string description, OptionCallback callback)
-            : base(prototype, description, 0, callback)
+            : base(prototype, description, callback)
         {
         }
 
         /// <inheritdoc />
-        protected override void OnInvocation(OptionContext context) => Callback.Invoke();
+        protected override void OnVisitation(OptionContext context) => Callback.Invoke();
     }
 }

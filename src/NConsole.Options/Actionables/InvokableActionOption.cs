@@ -11,6 +11,11 @@ namespace NConsole.Options
         /// </summary>
         protected TCallback Callback { get; }
 
+        protected InvokableActionOption(string prototype, string description, TCallback callback)
+            : this(prototype, description, 0, callback)
+        {
+        }
+
         protected InvokableActionOption(string prototype, string description, int count, TCallback callback)
             : base(prototype, description, count)
         {

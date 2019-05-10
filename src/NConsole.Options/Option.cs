@@ -222,24 +222,23 @@ namespace NConsole.Options
                     , nameof(prototype));
             }
 
-            if (MaximumValueCount <= 1)
+            // ReSharper disable once InvertIf
+            if (MaximumValueCount > 1)
             {
-                return ReturnParsedType();
-            }
+                switch (separators.Count)
+                {
+                    case 0:
+                        ValueSeparators = new[] {$"{Comma}"};
+                        break;
 
-            switch (separators.Count)
-            {
-                case 0:
-                    ValueSeparators = new[] { $"{Colon}", $"{Equal}" };
-                    break;
+                    case 1 when !IsNullOrEmpty(separators[0]):
+                        ValueSeparators = null;
+                        break;
 
-                case 1 when !IsNullOrEmpty(separators[0]):
-                    ValueSeparators = null;
-                    break;
-
-                default:
-                    ValueSeparators = separators.ToArray();
-                    break;
+                    default:
+                        ValueSeparators = separators.ToArray();
+                        break;
+                }
             }
 
             return ReturnParsedType();
@@ -305,9 +304,9 @@ namespace NConsole.Options
         /// Invokes the Option given the <paramref name="context"/>.
         /// </summary>
         /// <param name="context"></param>
-        public void Invoke(OptionContext context)
+        public void Visit(OptionContext context)
         {
-            OnInvocation(context);
+            OnVisitation(context);
             context.OptionName = null;
             context.Option = null;
             context.OptionValues.Clear();
@@ -317,7 +316,7 @@ namespace NConsole.Options
         /// Occurs in an Option specific manner given <paramref name="context"/>.
         /// </summary>
         /// <param name="context"></param>
-        protected abstract void OnInvocation(OptionContext context);
+        protected abstract void OnVisitation(OptionContext context);
 
         public override string ToString() => Prototype;
     }

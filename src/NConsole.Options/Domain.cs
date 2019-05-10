@@ -33,6 +33,7 @@
         /// <summary>
         /// &quot;--&quot;
         /// </summary>
+        /// <see cref="Dash"/>
         public static readonly string DoubleDash = $"{Dash}{Dash}";
     }
 }

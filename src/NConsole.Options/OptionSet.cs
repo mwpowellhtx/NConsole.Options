@@ -12,6 +12,7 @@ namespace NConsole.Options
     using static Domain;
     using static OptionSet.RegularExpressionNames;
     using static String;
+    using static OptionValueType;
     using static StringComparison;
 
     /// <inheritdoc />
@@ -323,7 +324,7 @@ namespace NConsole.Options
                 }
             }
 
-            context.Option?.Invoke(context);
+            context.Option?.Visit(context);
 
             return unprocessed;
         }
@@ -365,7 +366,7 @@ namespace NConsole.Options
 
             context.OptionValues.Add(arg);
             context.Option = candidateOption;
-            context.Option.Invoke(context);
+            context.Option.Visit(context);
 
             // TODO: TBD: why are we returning False here as well?
             return false;
@@ -453,13 +454,13 @@ namespace NConsole.Options
                 // ReSharper disable once SwitchStatementMissingSomeCases
                 switch (option.ValueType)
                 {
-                    case OptionValueType.None:
+                    case None:
                         context.OptionValues.Add(name);
-                        context.Option.Invoke(context);
+                        context.Option.Visit(context);
                         break;
 
-                    case OptionValueType.Optional:
-                    case OptionValueType.Required:
+                    case Optional:
+                    case Required:
                         ParseValue(val, context);
                         break;
                 }
@@ -472,32 +473,6 @@ namespace NConsole.Options
             return ParseBool(arg, name, context)
                    || ParseBundledValue(flag, $"{name}{sep}{val}", context)
                 ;
-        }
-
-        private void ParseValue(string option, OptionContext context)
-        {
-            if (option != null)
-            {
-                foreach (var optionText in context.Option.ValueSeparators != null
-                    ? option.Split(context.Option.ValueSeparators, StringSplitOptions.None)
-                    : new[] {option})
-                {
-                    context.OptionValues.Add(optionText);
-                }
-            }
-
-            if (context.OptionValues.Count == context.Option.MaximumValueCount
-                || context.Option.ValueType == OptionValueType.Optional)
-            {
-                context.Option.Invoke(context);
-            }
-            else if (context.OptionValues.Count > context.Option.MaximumValueCount)
-            {
-                throw new OptionException(Format(
-                        Localizer("Error: Found `{0}' option values when expecting `{1}'.")
-                        , context.OptionValues.Count, context.Option.MaximumValueCount),
-                    context.OptionName);
-            }
         }
 
         private bool ParseBool(string optionText, string name, OptionContext context)
@@ -518,23 +493,27 @@ namespace NConsole.Options
             context.Option = option;
             context.OptionValues.Add(v);
 
-            option.Invoke(context);
+            option.Visit(context);
 
             return true;
         }
 
         private bool ParseBundledValue(string flag, string name, OptionContext context)
         {
+            // TODO: TBD: http://www.ndesk.org/Options
+            // TODO: TBD: why? what's the difference between a Dash and a Slash or even a Dash Dash where this is concerned?
             if (flag != $"{Dash}")
             {
                 return false;
             }
 
+            // Literally, "BUNDLED", meaning, "-abc" actually parses to "-a -b -c".
             for (var i = 0; i < name.Length; ++i)
             {
+                // TODO: TBD: assumes "required name" is the first character in name?
                 var optionText = $"{flag}{name[i]}";
-                var rn = name[i].ToString();
-                if (!Contains(rn))
+                var bundledName = $"{name[i]}";
+                if (!Contains(bundledName))
                 {
                     if (i == 0)
                     {
@@ -547,16 +526,16 @@ namespace NConsole.Options
                         , optionText);
                 }
 
-                var option = this[rn];
+                var option = this[bundledName];
 
                 switch (option.ValueType)
                 {
-                    case OptionValueType.None:
-                        Invoke(context, optionText, name, option);
+                    case None:
+                        Visit(context, optionText, name, option);
                         break;
 
-                    case OptionValueType.Optional:
-                    case OptionValueType.Required:
+                    case Optional:
+                    case Required:
                     {
                         var v = name.Substring(i + 1);
                         context.Option = option;
@@ -566,19 +545,45 @@ namespace NConsole.Options
                     }
 
                     default:
-                        throw new InvalidOperationException("Unknown OptionValueType: " + option.ValueType);
+                        throw new InvalidOperationException($"Unknown {typeof(OptionValueType).FullName}: {option.ValueType}");
                 }
             }
 
             return true;
         }
 
-        private static void Invoke(OptionContext context, string name, string value, Option option)
+        private void ParseValue(string option, OptionContext context)
+        {
+            if (option != null)
+            {
+                foreach (var optionText in context.Option.ValueSeparators != null
+                    ? option.Split(context.Option.ValueSeparators, StringSplitOptions.None)
+                    : new[] {option})
+                {
+                    context.OptionValues.Add(optionText);
+                }
+            }
+
+            if (context.OptionValues.Count == context.Option.MaximumValueCount
+                || context.Option.ValueType == Optional)
+            {
+                context.Option.Visit(context);
+            }
+            else if (context.OptionValues.Count > context.Option.MaximumValueCount)
+            {
+                throw new OptionException(Format(
+                        Localizer("Error: Found `{0}' option values when expecting `{1}'.")
+                        , context.OptionValues.Count, context.Option.MaximumValueCount),
+                    context.OptionName);
+            }
+        }
+
+        private static void Visit(OptionContext context, string name, string value, Option option)
         {
             context.OptionName = name;
             context.Option = option;
             context.OptionValues.Add(value);
-            option.Invoke(context);
+            option.Visit(context);
         }
 
         private const int OptionWidth = 29;
@@ -646,12 +651,13 @@ namespace NConsole.Options
                 Write(writer, ref written, names[i]);
             }
 
+            // ReSharper disable once SwitchStatementMissingSomeCases
             switch (option.ValueType)
             {
-                case OptionValueType.Optional:
-                case OptionValueType.Required:
+                case Optional:
+                case Required:
                 {
-                    if (option.ValueType == OptionValueType.Optional)
+                    if (option.ValueType == Optional)
                     {
                         Write(writer, ref written, Localizer($"{SquareBracketOpen}"));
                     }
@@ -670,7 +676,7 @@ namespace NConsole.Options
                         );
                     }
 
-                    if (option.ValueType == OptionValueType.Optional)
+                    if (option.ValueType == Optional)
                     {
                         Write(writer, ref written, Localizer($"{SquareBracketClose}"));
                     }

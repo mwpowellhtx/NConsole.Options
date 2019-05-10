@@ -66,6 +66,11 @@
         public const char Dash = '-';
 
         /// <summary>
+        /// &apos;/&apos;
+        /// </summary>
+        public const char Slash = '/';
+
+        /// <summary>
         /// &apos;+&apos;
         /// </summary>
         public const char Plus = '+';

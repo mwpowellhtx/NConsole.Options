@@ -14,7 +14,7 @@
         }
 
         /// <inheritdoc />
-        protected override void OnInvocation(OptionContext context) => Callback.Invoke(
+        protected override void OnVisitation(OptionContext context) => Callback.Invoke(
             Parse<TKey>(context.OptionValues[0], context)
             , Parse<TValue>(context.OptionValues[1], context)
         );
