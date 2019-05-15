@@ -8,15 +8,6 @@
     <None Remove="NConsole.Options.Tests.csproj.DotSettings" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="*TargetOptionRegistrationTests.cs">
-      <DependentUpon>TargetOptionRegistrationTestFixtureBase.cs</DependentUpon>
-    </Compile>
-    <Compile Update="*KeyValueOptionRegistrationTests.cs">
-      <DependentUpon>KeyValueOptionRegistrationTestFixtureBase.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
   <!-- ReSharper disable UnknownProperty -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
@@ -40,6 +31,14 @@
     <Compile Update="StringStringKeyValueOptionRegistrationTests - Copy.cs">
       <DependentUpon>KeyValueOptionRegistrationTestFixtureBase.cs</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Parsing\KeyValue\" />
+    <Folder Include="Data\Parsing\Simple\" />
+    <Folder Include="Data\Registration\KeyValue\" />
+    <Folder Include="Data\Registration\Targets\" />
+    <Folder Include="Data\Registration\Simple\" />
   </ItemGroup>
 
 </Project>
