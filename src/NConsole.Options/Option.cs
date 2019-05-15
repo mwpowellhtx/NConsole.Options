@@ -12,7 +12,7 @@ namespace NConsole.Options
     /// <summary>
     /// Represents an Option asset concern.
     /// </summary>
-    public abstract class Option
+    public abstract class Option : IOption
     {
         /// <summary>
         /// Gets the Prototype.
@@ -27,7 +27,7 @@ namespace NConsole.Options
         /// <summary>
         /// Gets the ValueType.
         /// </summary>
-        public OptionValueType ValueType { get; }
+        public OptionValueType? ValueType { get; }
 
         /// <summary>
         /// Gets the MaximumValueCount.
@@ -92,25 +92,27 @@ namespace NConsole.Options
             {
                 var traitPrefix = $"{nameof(OptionValueType)}";
 
-                string EnumeratedTraits() => Join($" {or} ", traits.Select(x => $"`{traitPrefix}{Dot}{x}'"));
+                string EnumeratedTraits() => traits.Any()
+                    ? Join($" {or} ", traits.Select(x => $"`{traitPrefix}{Dot}{x}'"))
+                    : "[No Traits Specified]";
 
                 return new ArgumentException(
                     $"Cannot provide `{nameof(maximumValueCount)}' of {maximumValueCount} for {EnumeratedTraits()}."
                     , nameof(maximumValueCount));
             }
 
-            if (MaximumValueCount == 0 && ValueType != OptionValueType.None)
+            if (MaximumValueCount == 0 && ValueType.HasValue)
             {
                 throw ThrowMaximumValueCount( OptionValueType.Required, OptionValueType.Optional);
             }
 
-            if (ValueType == OptionValueType.None && maximumValueCount > 1)
+            if (ValueType.HasValue && maximumValueCount > 1)
             {
-                throw ThrowMaximumValueCount(OptionValueType.None);
+                throw ThrowMaximumValueCount();
             }
 
             if (Array.IndexOf(Names, AngleBrackets) >= 0
-                && ((Names.Length == 1 && ValueType != OptionValueType.None)
+                && ((Names.Length == 1 && ValueType.HasValue)
                     || (Names.Length > 1 && MaximumValueCount > 1)))
             {
                 throw new ArgumentException(
@@ -174,7 +176,7 @@ namespace NConsole.Options
         /// </summary>
         /// <param name="prototype"></param>
         /// <returns></returns>
-        private OptionValueType ParsePrototype(string prototype)
+        private OptionValueType? ParsePrototype(string prototype)
         {
             char? parsedType = null;
             var separators = new List<string>();
@@ -211,7 +213,7 @@ namespace NConsole.Options
 
             if (!parsedType.HasValue)
             {
-                return OptionValueType.None;
+                return null;
             }
 
             if (MaximumValueCount <= 1 && separators.Count != 0)
@@ -304,13 +306,7 @@ namespace NConsole.Options
         /// Invokes the Option given the <paramref name="context"/>.
         /// </summary>
         /// <param name="context"></param>
-        public void Visit(OptionContext context)
-        {
-            OnVisitation(context);
-            context.OptionName = null;
-            context.Option = null;
-            context.OptionValues.Clear();
-        }
+        public void Visit(OptionContext context) => OnVisitation(context);
 
         /// <summary>
         /// Occurs in an Option specific manner given <paramref name="context"/>.

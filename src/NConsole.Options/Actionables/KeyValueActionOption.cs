@@ -4,8 +4,8 @@
     /// Represents a <typeparamref name="TKey"/> and <typeparamref name="TValue"/> based Option
     /// asset.
     /// </summary>
-    /// <inheritdoc />
-    internal sealed class KeyValueActionOption<TKey, TValue> : InvokableActionOption<OptionCallback<TKey, TValue>>
+    /// <inheritdoc cref="InvokableActionOption{TCallback}"/>
+    internal sealed class KeyValueActionOption<TKey, TValue> : InvokableActionOption<OptionCallback<TKey, TValue>>, IKeyValueActionOption
     {
         /// <inheritdoc />
         public KeyValueActionOption(string prototype, string description, OptionCallback<TKey, TValue> callback)

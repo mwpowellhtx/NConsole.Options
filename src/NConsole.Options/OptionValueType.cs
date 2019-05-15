@@ -6,11 +6,6 @@
     public enum OptionValueType
     {
         /// <summary>
-        /// There is No discernible Value Type.
-        /// </summary>
-        None,
-
-        /// <summary>
         /// The Value is Optional.
         /// </summary>
         Optional,

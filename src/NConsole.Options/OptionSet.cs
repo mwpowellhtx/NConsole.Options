@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -10,10 +11,13 @@ namespace NConsole.Options
     using static Char;
     using static Characters;
     using static Domain;
+    using static Math;
     using static OptionSet.RegularExpressionNames;
     using static String;
     using static OptionValueType;
     using static StringComparison;
+    using static RegexOptions;
+    using LocalizationCallback = Converter<string, string>;
 
     /// <inheritdoc />
     public class OptionSet : KeyedCollection<string, Option>
@@ -32,7 +36,7 @@ namespace NConsole.Options
         /// </summary>
         /// <param name="localizer"></param>
         /// <inheritdoc />
-        public OptionSet(Converter<string, string> localizer)
+        public OptionSet(LocalizationCallback localizer)
         {
             Localizer = localizer;
         }
@@ -41,7 +45,7 @@ namespace NConsole.Options
         /// <summary>
         /// Gets the MessageLocalizer.
         /// </summary>
-        public Converter<string, string> Localizer { get; }
+        public LocalizationCallback Localizer { get; }
         // ReSharper restore IdentifierTypo
 
         /// <inheritdoc />
@@ -62,24 +66,6 @@ namespace NConsole.Options
             // This should never happen since it is invalid for Option to be without any names.
             throw new InvalidOperationException($"`{nameof(option)}' has no names!");
         }
-
-        //[Obsolete("Use KeyedCollection.this[string]")]
-        //protected Option GetOptionForName(string option)
-        //{
-        //    if (option == null)
-        //    {
-        //        throw new ArgumentNullException(nameof(option));
-        //    }
-        //    try
-        //    {
-        //        return base[option];
-        //    }
-        //    // ReSharper disable once IdentifierTypo
-        //    catch (KeyNotFoundException knfex)
-        //    {
-        //        return null;
-        //    }
-        //}
 
         /// <inheritdoc />
         protected override void InsertItem(int index, Option item)
@@ -282,8 +268,15 @@ namespace NConsole.Options
 
         protected virtual OptionContext CreateOptionContext() => new OptionContext(this);
 
+        // TODO: TBD: the execution on this (baseline?) implementation is REALLY confused, I think.
+        // TODO: TBD: I think it needs to be simplified: 1) stage the argument parts for the desired option(s)
+        // TODO: TBD: 2) deliver said parts to the matching option(s) "on visitation" ...
+        // TODO: TBD: 3) capture any parts that fail to match anything
+
+        private Option DefaultOption => Contains(AngleBrackets) ? this[AngleBrackets] : null;
+
         /// <summary>
-        /// Parses the <paramref name="args"/> and returns any Unprocessed Arguments encountered
+        /// Parses the <paramref name="args"/> and returns any that were Not Dispatched
         /// during the operation. Calling this method is the nerve center of starting the
         /// <see cref="Option"/> collection being parsed, doing something with them in the
         /// scope of your application.
@@ -292,84 +285,268 @@ namespace NConsole.Options
         /// <returns></returns>
         public List<string> Parse(params string[] args)
         {
-            // TODO: TBD: this is when we use context? any other time? should it be disposable in any way?
-            // TODO: TBD: I am thinking that "context" should potentially be more broadly cross-cutting than that...
-            // TODO: TBD: the reason being is that there are moment in the Option, callbacks, etc, where there are strings which could benefit from localization...
+            var argsNotDispatched = new List<string>();
+
             var context = CreateOptionContext();
-            // TODO: TBD: consider how Context itself should be responsible for processing across the range of option set... ?
-            // TODO: TBD: would be a subtle, but potentially worthwhile, refactoring, that inverts the control, provides opportunities for functional injection, etc
-            context.OptionIndex = -1;
-            var process = true;
-            var defaultOption = Contains(AngleBrackets) ? this[AngleBrackets] : null;
-            var unprocessed = new List<string>();
-            foreach (var arg in args)
+
+            for (var count = 0; args.Any(); args = args.Skip(count + 1).ToArray())
             {
-                ++context.OptionIndex;
+                var arg = args[0];
+
+                // As informed by the Default value and by subsequent Dispatch.
+                switch (count)
+                {
+                    case 0:
+                        ++context.OptionIndex;
+                        break;
+
+                    default:
+                        // TODO: TBD: check this, this is probably correct... or is that ... += (count - 1) ?
+                        context.OptionIndex += count + 1;
+                        break;
+                }
+
+                // TODO: TBD: should a similar thing happen for Slash? Dash?
+                // Ignoring non-arguments.
                 if (arg == DoubleDash)
                 {
-                    process = false;
+                    argsNotDispatched.Add(arg);
+                    count = 0;
                     continue;
                 }
 
-                // TODO: TBD: ism's like, !process, !parse, falling through to `Unprocessed', just refactor that to a more natural course of evaluation, sequence of TryProcess...
-                if (!process)
+                // Evaluate the Bundle first since its pattern is a Subset of the Singular Argument.
+                if (!(TryEvaluateBundle(arg, out var parts) || TryEvaluateArgument(arg, out parts)))
                 {
-                    TryProcessArgument(arg, defaultOption, context, unprocessed);
+                    // If the pattern is Neither of these, then Report as such and Continue.
+                    argsNotDispatched.Add(arg);
                     continue;
                 }
 
-                if (!TryParse(arg, context))
+                // TODO: TBD: I do not thing this necessarily needs to be a Try...
+                if (!TryDispatchOptionVisit(context, ref parts, args, out count))
                 {
-                    TryProcessArgument(arg, defaultOption, context, unprocessed);
+                    args.Take(count + 1).ToList().ForEach(argsNotDispatched.Add);
                 }
             }
 
-            context.Option?.Visit(context);
-
-            return unprocessed;
+            return argsNotDispatched;
         }
 
-        //public List<string> Parse2(IEnumerable<string> args)
-        //{
-        //    var process = true;
-        //    var context = CreateOptionContext();
-        //    context.OptionIndex = -1;
-        //    var def = GetOptionForName(AngleBrackets);
-        //    var unprocessed = args.Where(x =>
-        //        ++context.OptionIndex < 0
-        //        || !process && def == null
-        //        || (process
-        //            ? x == $"{Dash}{Dash}"
-        //                ? process = false
-        //                : !Parse(x, context) && (def == null || Unprocessed(null, def, context, x))
-        //            : def == null || Unprocessed(null, def, context, x)));
-        //    var r = unprocessed.ToList();
-        //    context.Option?.Invoke(context);
-        //    return r;
-        //}
-
         /// <summary>
-        /// Tries to Process the <paramref name="arg"/> given the parameters.
+        /// 
         /// </summary>
-        /// <param name="arg"></param>
-        /// <param name="candidateOption"></param>
         /// <param name="context"></param>
-        /// <param name="remaining"></param>
+        /// <param name="parts"></param>
+        /// <param name="args"></param>
+        /// <param name="count"></param>
         /// <returns></returns>
-        private static bool TryProcessArgument(string arg, Option candidateOption, OptionContext context, ICollection<string> remaining)
+        private bool TryDispatchOptionVisit(OptionContext context, ref ArgumentEvaluationResult parts
+            , IReadOnlyList<string> args, out int count)
         {
-            if (candidateOption == null)
+            var dispatched = 0;
+
+            count = 0;
+
+            string RenderEnableBoolean(bool enable) => $"{enable}".ToLower();
+
+            bool IsNeitherBundleNorArgument(string arg) => !(TryEvaluateBundle(arg, out _) || TryEvaluateArgument(arg, out _));
+
+            bool AreNeitherBundlesNorArguments(params string[] items) => items.All(IsNeitherBundleNorArgument);
+
+            // Key is more of a Key at this point than a Name, used to lookup the Option.
+            foreach (var (key, option) in parts.Options)
             {
-                remaining.Add(arg);
-                return false;
+                // Accounting for Parts.Value, Boolean Flags, is transparent with this approach.
+                var currentCount = 0;
+
+                /* Having closed the loop with this bookkeeping, then we can focus our undivided
+                 * attention on Dispatching the correct Option Parameters to the next Option. */
+
+                context.Option = option;
+                context.OptionName = $"{parts.Flag}{key}";
+                context.OptionValues.Clear();
+
+                /* TODO: TBD: the dispatch heuristics are a more relax here, just simply because each
+                 * individual Option may require a different set of parameters, but we still want to
+                 * signal which actual arguments were consumed by either the dispatched bundled value,
+                 * or the next value(s) in sequence, etc. */
+
+                // Determine which other Parameters we should be able to furnish the next Dispatch.
+                switch (context.Option)
+                {
+                    // No-op in this case, we have what we came here for.
+                    case ISimpleActionOption _:
+                        break;
+
+                    case IActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue:
+                        context.OptionValues.Add(parts.Value);
+                        break;
+
+                    case IActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue:
+                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        break;
+
+                    case IActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
+                                              && args.Count > 1
+                                              && IsNeitherBundleNorArgument(args[1]):
+
+                        context.OptionValues.Add(args[++currentCount]);
+                        break;
+
+                    // TODO: TBD: we will worry about additional 'separator' based key/value cases in a later iteration.
+                    case IKeyValueActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue
+                                                      && args.Count > 1
+                                                      && IsNeitherBundleNorArgument(args[1]):
+
+                        context.OptionValues.Add(parts.Value);
+                        context.OptionValues.Add(args[++currentCount]);
+                        break;
+
+                    case IKeyValueActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue
+                                                      && args.Count > 1
+                                                      && IsNeitherBundleNorArgument(args[1]):
+
+                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        context.OptionValues.Add(args[++currentCount]);
+                        break;
+
+                    case IKeyValueActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
+                                                      && args.Count > 2
+                                                      && AreNeitherBundlesNorArguments(args[1], args[2]):
+
+                        context.OptionValues.Add(args[++currentCount]);
+                        context.OptionValues.Add(args[++currentCount]);
+                        break;
+
+                    default:
+
+                        //throw new OptionException(
+                        //    Format(Localizer("Invalid `{0}' parameter specification discovered.")
+                        //        , context.OptionName)
+                        //    , context.OptionName
+                        //);
+
+                        // TODO: TBD: throw? or simply continue?
+                        // There is nothing to process, so Continue, bypass the Visitation.
+                        continue;
+                }
+
+                // Which culminates in an Option Visit.
+                context.Visit();
+
+                // Pull the Maximum Count forward to be reconciled by the Caller.
+                count = Max(count, currentCount);
+
+                ++dispatched;
             }
 
-            context.OptionValues.Add(arg);
-            context.Option = candidateOption;
-            context.Option.Visit(context);
+            return dispatched > 0;
+        }
 
-            // TODO: TBD: why are we returning False here as well?
-            return false;
+        private struct ArgumentEvaluationResult
+        {
+            internal string Flag { get; }
+
+            /// <summary>
+            /// Gets the Name. &quot;Name&quot; represents either the Name, or Bundled
+            /// <see cref="Option.Names"/> plus potentially a value. Additionally, Name
+            /// ignores any <see cref="BooleanFlags"/> concerns appended to itself.
+            /// </summary>
+            /// <see cref="EnableBoolean"/>
+            internal string Name { get; }
+
+            /// <summary>
+            /// Gets the Options involved Keyed based on the Name used to identify the Value.
+            /// The String of which is more of a Key at this point than a Name, which was used
+            /// to lookup the actual <see cref="Option"/> instance.
+            /// </summary>
+            internal ICollection<Tuple<string, Option>> Options { get; }
+
+            // TODO: TBD: what to do about Separator ...
+            internal string Separator { get; }
+
+            /// <summary>
+            /// Gets or Sets the Value.
+            /// </summary>
+            internal string Value { get; set; }
+
+            /// <summary>
+            /// Feeds the <see cref="EnableBoolean"/> indicator.
+            /// </summary>
+            /// <see cref="EnableBoolean"/>
+            private Lazy<bool?> LazyEnableBoolean { get; }
+
+            /// <summary>
+            /// Gets the <see cref="Lazy{T}"/> initialized Boolean whether to Enable the Option.
+            /// Optionally indicates whether to Enable or Disable the Option accordingly.
+            /// </summary>
+            /// <see cref="BooleanFlags"/>
+            /// <see cref="LazyEnableBoolean"/>
+            internal bool? EnableBoolean => LazyEnableBoolean.Value;
+
+            // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
+            internal static readonly ArgumentEvaluationResult Failed = new ArgumentEvaluationResult { };
+
+            // ReSharper disable once IdentifierTypo
+            /// <summary>
+            /// Internal Constructor.
+            /// </summary>
+            /// <param name="flag"></param>
+            /// <param name="name"></param>
+            /// <param name="separator"></param>
+            /// <param name="value"></param>
+            internal ArgumentEvaluationResult(string flag = null, string name = null, string separator = null, string value = null)
+            {
+                // Defer evaluation of the Last character in the Name enumerated value.
+                char NameLast() => name.Last();
+
+                Flag = flag;
+
+                // Set the Name without any appended Boolean Flags.
+                Name = IsNullOrEmpty(name)
+                    ? null
+                    : BooleanFlags.Contains(NameLast())
+                        ? name.Substring(0, name.Length - 1)
+                        : name;
+
+                // TODO: TBD: what to do about 'Separators'
+                Separator = separator;
+
+                // TODO: TBD: which Value may be the a special case of Enable Boolean.
+                Value = value;
+
+                LazyEnableBoolean = new Lazy<bool?>(() =>
+                {
+                    //                                                 +    (true),  -    (false)
+                    var booleanFlagsMap = new Dictionary<char, bool> {{Plus, true}, {Dash, false}};
+                    return !IsNullOrEmpty(name)
+                           && booleanFlagsMap.TryGetValue(NameLast(), out var x)
+                        ? x
+                        : (bool?) null;
+                });
+
+                // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
+                Options = new List<Tuple<string, Option>> { };
+            }
+
+            /// <summary>
+            /// Gets whether the Evaluation IsValid. Valid when we Have a Flag and a Name.
+            /// Additionally, we do not expect BOTH <see cref="Value"/> and
+            /// <see cref="EnableBoolean"/> to have occurred.
+            /// </summary>
+            internal bool IsValid => !(IsNullOrEmpty(Flag) && IsNullOrEmpty(Name))
+                                     && !(!IsNullOrEmpty(Value) && EnableBoolean.HasValue);
+
+            internal bool IsBundled => Flag == $"{Dash}" && !IsNullOrEmpty(Name);
+
+            /// <summary>
+            /// Gets whether HasValue. True when <see cref="Value"/> actually Has a Value,
+            /// or when <see cref="EnableBoolean"/> Has a Value.
+            /// </summary>
+            /// <see cref="Value"/>
+            /// <see cref="EnableBoolean"/>
+            internal bool HasValue => !IsNullOrEmpty(Value) || EnableBoolean.HasValue;
         }
 
         // ReSharper disable InconsistentNaming
@@ -386,6 +563,11 @@ namespace NConsole.Options
             public const string name = nameof(name);
 
             /// <summary>
+            /// &quot;bundle&quot;
+            /// </summary>
+            public const string bundle = nameof(bundle);
+
+            /// <summary>
             /// &quot;sep&quot;
             /// </summary>
             public const string sep = nameof(sep);
@@ -395,197 +577,74 @@ namespace NConsole.Options
             /// </summary>
             public const string val = nameof(val);
         }
+
         // ReSharper restore InconsistentNaming
+        // TODO: TBD: handling "bundled" as a separate case...
+        private Regex BundledOptionRegex { get; } = new Regex(@"^((?!--|/)(?<flag>-))(?<bundle>[^:=]+)?$", Compiled);
 
-        private Regex ValueOptionRegex { get; } = new Regex(
-            @"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<val>.*))?$"
-            , RegexOptions.Compiled
-        );
+        private bool TryEvaluateBundle(string arg, out ArgumentEvaluationResult result)
+        {
+            // TODO: TBD: we might even "evaluate" the Option (or Options) depending on the evaluated result.
+            if (arg == null)
+            {
+                throw new ArgumentNullException(nameof(arg));
+            }
 
-        protected bool TryGetOptionParts(string arg, out string flagResult
-            , out string nameResult, out string sepResult, out string valResult)
+            var match = BundledOptionRegex.Match(arg);
+
+            result = match.Success && match.AreGroupsSuccessful(flag, bundle)
+                    ? new ArgumentEvaluationResult(match.GetGroupValue(flag), match.GetGroupValue(bundle))
+                    : ArgumentEvaluationResult.Failed;
+
+            if (!(result.IsValid || result.IsBundled))
+            {
+                return false;
+            }
+
+            /* We could interpolate each of the characters then evaluate Contains and Select,
+             * but this works as well, and only Takes what we want. */
+            foreach (var y in result.Name.TakeWhile(x => Contains($"{x}")).Select(x => $"{x}"))
+            {
+                result.Options.Add(Tuple.Create(y, this[y]));
+            }
+
+            result.Value = result.Name.Length == result.Options.Count
+                ? null
+                : result.Name.Substring(result.Options.Count);
+
+            return true;
+        }
+
+        private Regex ValueOptionRegex { get; } = new Regex(@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<val>.*))?$", Compiled);
+
+        private bool TryEvaluateArgument(string arg, out ArgumentEvaluationResult result)
         {
             if (arg == null)
             {
                 throw new ArgumentNullException(nameof(arg));
             }
 
-            flagResult = nameResult = sepResult = valResult = null;
-            var m = ValueOptionRegex.Match(arg);
-            if (!m.Success)
+            var match = ValueOptionRegex.Match(arg);
+
+            result = match.Success && match.AreGroupsSuccessful(flag, name)
+                ? new ArgumentEvaluationResult(match.GetGroupValue(flag), match.GetGroupValue(name)
+                    , match.GetGroupValueOrDefault(sep), match.GetGroupValueOrDefault(val))
+                : ArgumentEvaluationResult.Failed;
+
+            if (!result.IsValid)
             {
                 return false;
             }
 
-            flagResult = m.Groups[flag].Value;
-            nameResult = m.Groups[name].Value;
-
-            // ReSharper disable once InvertIf
-            if (m.Groups[sep].Success && m.Groups[val].Success)
-            {
-                sepResult = m.Groups[sep].Value;
-                valResult = m.Groups[val].Value;
-            }
+            result.Options.Add(Tuple.Create(
+                result.Name
+                , Contains(result.Name) ? this[result.Name] : DefaultOption
+            ));
 
             return true;
         }
 
-        protected virtual bool TryParse(string arg, OptionContext context)
-        {
-            if (context.Option != null)
-            {
-                ParseValue(arg, context);
-                return true;
-            }
-
-            if (!TryGetOptionParts(arg, out var flag, out var name, out var sep, out var val))
-            {
-                return false;
-            }
-
-            // ReSharper disable once InvertIf
-            if (Contains(name))
-            {
-                var option = this[name];
-
-                context.OptionName = $"{flag}{name}";
-                context.Option = option;
-
-                // ReSharper disable once SwitchStatementMissingSomeCases
-                switch (option.ValueType)
-                {
-                    case None:
-                        context.OptionValues.Add(name);
-                        context.Option.Visit(context);
-                        break;
-
-                    case Optional:
-                    case Required:
-                        ParseValue(val, context);
-                        break;
-                }
-
-                return true;
-            }
-
-            // TODO: TBD: No match; is it a bool option?
-            // TODO: TBD: Is it a bundled option?
-            return ParseBool(arg, name, context)
-                   || ParseBundledValue(flag, $"{name}{sep}{val}", context)
-                ;
-        }
-
-        private bool ParseBool(string optionText, string name, OptionContext context)
-        {
-            string requiredName;
-
-            if (name.Length < 1
-                || !(name[name.Length - 1] == Plus || name[name.Length - 1] == Dash)
-                || !Contains(requiredName = name.Substring(0, name.Length - 1)))
-            {
-                return false;
-            }
-
-            var option = this[requiredName];
-            var v = name[name.Length - 1] == Plus ? optionText : null;
-
-            context.OptionName = optionText;
-            context.Option = option;
-            context.OptionValues.Add(v);
-
-            option.Visit(context);
-
-            return true;
-        }
-
-        private bool ParseBundledValue(string flag, string name, OptionContext context)
-        {
-            // TODO: TBD: http://www.ndesk.org/Options
-            // TODO: TBD: why? what's the difference between a Dash and a Slash or even a Dash Dash where this is concerned?
-            if (flag != $"{Dash}")
-            {
-                return false;
-            }
-
-            // Literally, "BUNDLED", meaning, "-abc" actually parses to "-a -b -c".
-            for (var i = 0; i < name.Length; ++i)
-            {
-                // TODO: TBD: assumes "required name" is the first character in name?
-                var optionText = $"{flag}{name[i]}";
-                var bundledName = $"{name[i]}";
-                if (!Contains(bundledName))
-                {
-                    if (i == 0)
-                    {
-                        return false;
-                    }
-
-                    throw new OptionException(Format(
-                            Localizer("Cannot bundle unregistered option `{0}'.")
-                            , optionText)
-                        , optionText);
-                }
-
-                var option = this[bundledName];
-
-                switch (option.ValueType)
-                {
-                    case None:
-                        Visit(context, optionText, name, option);
-                        break;
-
-                    case Optional:
-                    case Required:
-                    {
-                        var v = name.Substring(i + 1);
-                        context.Option = option;
-                        context.OptionName = optionText;
-                        ParseValue(v.Length != 0 ? v : null, context);
-                        return true;
-                    }
-
-                    default:
-                        throw new InvalidOperationException($"Unknown {typeof(OptionValueType).FullName}: {option.ValueType}");
-                }
-            }
-
-            return true;
-        }
-
-        private void ParseValue(string option, OptionContext context)
-        {
-            if (option != null)
-            {
-                foreach (var optionText in context.Option.ValueSeparators != null
-                    ? option.Split(context.Option.ValueSeparators, StringSplitOptions.None)
-                    : new[] {option})
-                {
-                    context.OptionValues.Add(optionText);
-                }
-            }
-
-            if (context.OptionValues.Count == context.Option.MaximumValueCount
-                || context.Option.ValueType == Optional)
-            {
-                context.Option.Visit(context);
-            }
-            else if (context.OptionValues.Count > context.Option.MaximumValueCount)
-            {
-                throw new OptionException(Format(
-                        Localizer("Error: Found `{0}' option values when expecting `{1}'.")
-                        , context.OptionValues.Count, context.Option.MaximumValueCount),
-                    context.OptionName);
-            }
-        }
-
-        private static void Visit(OptionContext context, string name, string value, Option option)
-        {
-            context.OptionName = name;
-            context.Option = option;
-            context.OptionValues.Add(value);
-            option.Visit(context);
-        }
-
+        // TODO: TBD: next steps might include evaluating whether description formatting ought to be any different...
         private const int OptionWidth = 29;
 
         public void WriteOptionDescriptions(TextWriter writer)

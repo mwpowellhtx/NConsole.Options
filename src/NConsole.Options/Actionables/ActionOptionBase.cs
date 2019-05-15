@@ -4,8 +4,8 @@
     /// Represents a <typeparamref name="TTarget"/> specific <see cref="Option"/> asset.
     /// </summary>
     /// <typeparam name="TTarget"></typeparam>
-    /// <inheritdoc />
-    internal abstract class ActionOptionBase<TTarget> : InvokableActionOption<OptionCallback<TTarget>>
+    /// <inheritdoc cref="InvokableActionOption{TCallback}"/>
+    internal abstract class ActionOptionBase<TTarget> : InvokableActionOption<OptionCallback<TTarget>>, IInvokableActionOption
     {
         /// <summary>
         /// Protected Constructor.
