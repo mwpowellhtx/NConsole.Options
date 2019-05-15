@@ -1,18 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace NConsole.Options
+namespace NConsole.Options.Data.Registration
 {
-    using static Characters;
-    using static TestFixtureBase;
-
     internal class RequiredOrOptionalOptionSetRegistrationTestCases : OptionSetRegistrationTestCases
     {
         private static IEnumerable<object[]> _privateCases;
 
+        // TODO: TBD: add Separator test cases especially for KeyValue testing...
+        // TODO: TBD: but may also need/want to intercept any exceptions thrown for Simple or even Target registration...
         protected override IEnumerable<object[]> Cases
             => _privateCases ?? (_privateCases
-                   = MergeCases(base.Cases, GetRange<object>(Equal, Colon).ToArray())
+                   = MergeCases(base.Cases, RequiredOrOptionalCases.Select(x => (object) x))
                );
     }
 }

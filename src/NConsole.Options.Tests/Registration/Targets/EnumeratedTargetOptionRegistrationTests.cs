@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace NConsole.Options
+namespace NConsole.Options.Registration.Targets
 {
     using Xunit.Abstractions;
 

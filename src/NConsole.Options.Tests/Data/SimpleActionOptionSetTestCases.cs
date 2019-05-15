@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace NConsole.Options
 {
+    using Data;
     using static Characters;
     using static TestFixtureBase;
 

@@ -63,15 +63,5 @@ namespace NConsole.Options
             );
         }
         // ReSharper restore IdentifierTypo
-
-        //[Fact]
-        //public void Verify()
-        //{
-        //    VerifyContext(context =>
-        //    {
-        //        var collection = new OptionValueCollection(context);
-        //        //collection.Add()
-        //    });
-        //}
     }
 }

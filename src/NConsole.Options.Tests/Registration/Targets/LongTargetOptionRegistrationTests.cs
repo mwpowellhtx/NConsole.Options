@@ -1,6 +1,6 @@
 ﻿using Xunit.Abstractions;
 
-namespace NConsole.Options
+namespace NConsole.Options.Registration.Targets
 {
     public class LongTargetOptionRegistrationTests : TargetOptionRegistrationTestFixtureBase<long>
     {

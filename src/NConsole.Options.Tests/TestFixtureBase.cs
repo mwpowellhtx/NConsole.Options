@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace NConsole.Options
@@ -17,11 +18,11 @@ namespace NConsole.Options
             return options;
         }
 
-        protected static void VerifyOption<T>(Option option, string prototype, OptionValueType valueType)
+        protected static void VerifyOption<T>(Option option, string prototype, OptionValueType? valueType)
             where T : Option
             => VerifyOption<T>(option, prototype, null, valueType);
 
-        protected static void VerifyOption<T>(Option option, string prototype, string description, OptionValueType valueType)
+        protected static void VerifyOption<T>(Option option, string prototype, string description, OptionValueType? valueType)
             where T : Option
         {
             var x = option.AssertNotNull().AssertIsType<T>();
@@ -45,6 +46,8 @@ namespace NConsole.Options
                 yield return value;
             }
         }
+
+        protected internal static T[] GetRangeArray<T>(params T[] values) => GetRange(values).ToArray();
 
         protected internal static IEnumerable<T> GetRepeatedRange<T>(T value, int count)
         {

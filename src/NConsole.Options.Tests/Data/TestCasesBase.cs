@@ -2,12 +2,48 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NConsole.Options
+namespace NConsole.Options.Data
 {
     using static TestFixtureBase;
 
     internal abstract class TestCasesBase : IEnumerable<object[]>
     {
+        /// <summary>
+        /// 1
+        /// </summary>
+        protected const int One = 1;
+
+        /// <summary>
+        /// 3
+        /// </summary>
+        protected const int Nominal = 3;
+
+        /// <summary>
+        /// Gets the <see cref="MilitaryAlphabet.Instance"/>.
+        /// </summary>
+        /// <see cref="MilitaryAlphabet"/>
+        /// <see cref="MilitaryAlphabet.Instance"/>
+        protected static MilitaryAlphabet AlphabetInstance => MilitaryAlphabet.Instance;
+
+        private static IEnumerable<string> _prototypeNames;
+
+        /// <summary>
+        /// Gets a sequence of <see cref="Nominal"/> <see cref="AlphabetInstance"/> Names.
+        /// </summary>
+        /// <see cref="Nominal"/>
+        /// <see cref="AlphabetInstance"/>
+        /// <see cref="MilitaryAlphabet"/>
+        protected static IEnumerable<string> PrototypeNames
+        {
+            get
+            {
+                IEnumerable<string> GetAll(int count)
+                    => AlphabetInstance.Take(count).Select(x => x.ToLower()).ToArray();
+
+                return _prototypeNames ?? (_prototypeNames = GetAll(Nominal));
+            }
+        }
+
         protected abstract IEnumerable<object[]> Cases { get; }
 
         public IEnumerator<object[]> GetEnumerator() => Cases.GetEnumerator();

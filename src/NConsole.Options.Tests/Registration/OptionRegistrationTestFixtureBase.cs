@@ -7,6 +7,7 @@ namespace NConsole.Options
     using static Characters;
     using static OptionValueType;
 
+
     public abstract class OptionRegistrationTestFixtureBase : TestFixtureBase<OptionSet>
     {
         protected OptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper)
@@ -18,11 +19,11 @@ namespace NConsole.Options
 
         protected static IEnumerable<char?> RequiredOrOptionalRange => GetRange<char?>(null, Equal, Colon);
 
-        protected static bool TryDressPrototype(ref string prototype, char? requiredOrOptional, out OptionValueType expectedType)
+        protected static bool TryDressPrototype(ref string prototype, char? requiredOrOptional, out OptionValueType? expectedType)
         {
             var tried = false;
 
-            expectedType = None;
+            expectedType = null;
 
             string Dress(string p) => $"{p}{requiredOrOptional.Value}";
 
@@ -52,8 +53,24 @@ namespace NConsole.Options
     public abstract class OptionRegistrationTestFixtureBase<TCallback> : OptionRegistrationTestFixtureBase
         where TCallback : Delegate
     {
-        protected TCallback Callback { get; }
+        private TCallback _callback;
 
+        /// <summary>
+        /// Gets or Sets the Callback, either via constructor argument or later on,
+        /// such as during test verification.
+        /// </summary>
+        protected TCallback Callback
+        {
+            get => _callback;
+            set => _callback = value.AssertNotNull();
+    }
+
+        /// <summary>
+        /// Default behavior suggests that we should be able to handle a Default
+        /// <paramref name="callback"/>.
+        /// </summary>
+        /// <param name="outputHelper"></param>
+        /// <param name="callback"></param>
         protected OptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper, TCallback callback)
             : base(outputHelper)
         {

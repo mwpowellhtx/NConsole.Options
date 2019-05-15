@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NConsole.Options
+namespace NConsole.Options.Data
 {
     /// <summary>
     /// The Military Alphabet as defined from Alpha through Zebra.

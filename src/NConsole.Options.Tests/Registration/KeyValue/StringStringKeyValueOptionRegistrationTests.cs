@@ -1,4 +1,4 @@
-﻿namespace NConsole.Options
+﻿namespace NConsole.Options.Registration.KeyValue
 {
     using Xunit.Abstractions;
 

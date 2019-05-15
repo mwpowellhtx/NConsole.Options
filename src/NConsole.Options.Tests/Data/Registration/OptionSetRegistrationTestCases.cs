@@ -1,17 +1,36 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace NConsole.Options
+namespace NConsole.Options.Data.Registration
 {
     using static Characters;
     using static TestFixtureBase;
 
     internal class OptionSetRegistrationTestCases : TestCasesBase
     {
+        private static IEnumerable<char?> _requiredOrOptionalCases;
+
         /// <summary>
-        /// Gets the <see cref="MilitaryAlphabet.Instance"/>.
+        /// Gets the Required or Optional Cases.
         /// </summary>
-        private static MilitaryAlphabet AlphabetInstance => MilitaryAlphabet.Instance;
+        /// <see cref="Colon"/>
+        /// <see cref="Equal"/>
+        protected static IEnumerable<char?> RequiredOrOptionalCases
+        {
+            get
+            {
+                IEnumerable<char?> GetAll(char required, char optional)
+                {
+                    yield return null;
+                    yield return required;
+                    yield return optional;
+                }
+
+                return _requiredOrOptionalCases ?? (_requiredOrOptionalCases
+                           = GetAll(Equal, Colon).ToArray()
+                       );
+            }
+        }
 
         private static IEnumerable<object[]> _privateCases;
 
@@ -29,9 +48,7 @@ namespace NConsole.Options
                     }
                 }
 
-                const int nominal = 3;
-
-                return _privateCases ?? (_privateCases = GetAll(nominal));
+                return _privateCases ?? (_privateCases = GetAll(Nominal));
             }
         }
     }
