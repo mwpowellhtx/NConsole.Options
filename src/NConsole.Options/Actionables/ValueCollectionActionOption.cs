@@ -1,5 +1,6 @@
 ﻿namespace NConsole.Options
 {
+    // TODO: TBD: still not sure what this one has to do with?
     /// <summary>
     /// Represents an <see cref="OptionValueCollection"/> based <see cref="Option"/> asset.
     /// </summary>
