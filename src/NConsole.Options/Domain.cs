@@ -35,5 +35,12 @@
         /// </summary>
         /// <see cref="Dash"/>
         public static readonly string DoubleDash = $"{Dash}{Dash}";
+
+        /// <summary>
+        /// &quot;+-&quot;
+        /// </summary>
+        /// <see cref="Plus"/>
+        /// <see cref="Dash"/>
+        public static readonly string BooleanFlags = $"{Plus}{Dash}";
     }
 }
