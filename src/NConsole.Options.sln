@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{C9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B08BB80E-2D83-473D-9A82-C24CD2626C4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NConsole.Options.Tests", "NConsole.Options.Tests\NConsole.Options.Tests.csproj", "{309B4268-DF61-42BE-9517-ACC656DA47EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NConsole.Options.Tests", "NConsole.Options.Tests\NConsole.Options.Tests.csproj", "{309B4268-DF61-42BE-9517-ACC656DA47EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
