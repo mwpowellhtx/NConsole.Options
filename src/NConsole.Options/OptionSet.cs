@@ -541,12 +541,13 @@ namespace NConsole.Options
             internal bool IsBundled => Flag == $"{Dash}" && !IsNullOrEmpty(Name);
 
             /// <summary>
-            /// Gets whether HasValue. True when <see cref="Value"/> actually Has a Value,
-            /// or when <see cref="EnableBoolean"/> Has a Value.
+            /// Gets whether HasValue. True when <see cref="Value"/> actually Has a Value.
+            /// Should not be confused with whether <see cref="EnableBoolean"/> also, or
+            /// rather, instead of, Has a Value.
             /// </summary>
             /// <see cref="Value"/>
             /// <see cref="EnableBoolean"/>
-            internal bool HasValue => !IsNullOrEmpty(Value) || EnableBoolean.HasValue;
+            internal bool HasValue => !IsNullOrEmpty(Value);
         }
 
         // ReSharper disable InconsistentNaming
@@ -577,14 +578,12 @@ namespace NConsole.Options
             /// </summary>
             public const string val = nameof(val);
         }
-
         // ReSharper restore InconsistentNaming
-        // TODO: TBD: handling "bundled" as a separate case...
+
         private Regex BundledOptionRegex { get; } = new Regex(@"^((?!--|/)(?<flag>-))(?<bundle>[^:=]+)?$", Compiled);
 
         private bool TryEvaluateBundle(string arg, out ArgumentEvaluationResult result)
         {
-            // TODO: TBD: we might even "evaluate" the Option (or Options) depending on the evaluated result.
             if (arg == null)
             {
                 throw new ArgumentNullException(nameof(arg));
