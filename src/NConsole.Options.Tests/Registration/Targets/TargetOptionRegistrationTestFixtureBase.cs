@@ -26,7 +26,7 @@
         /// <param name="prototype"></param>
         /// <param name="requiredOrOptional"></param>
         /// <returns></returns>
-        protected OptionSet Register(string prototype, char? requiredOrOptional)
+        protected OptionSet Register(string prototype, char? requiredOrOptional = null)
         {
             var p = prototype.AssertNotNull().AssertNotEmpty();
             var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
@@ -54,7 +54,7 @@
         /// <param name="description"></param>
         /// <param name="requiredOrOptional"></param>
         /// <returns></returns>
-        protected OptionSet Register(string prototype, string description, char? requiredOrOptional)
+        protected OptionSet Register(string prototype, string description, char? requiredOrOptional = null)
         {
             var p = prototype.AssertNotNull().AssertNotEmpty();
             var d = description.AssertNotNull().AssertNotEmpty();
