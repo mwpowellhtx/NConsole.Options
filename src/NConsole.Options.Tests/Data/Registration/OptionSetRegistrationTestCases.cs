@@ -32,9 +32,9 @@ namespace NConsole.Options.Data.Registration
             }
         }
 
-        private static IEnumerable<object[]> _privateCases;
+        private static IEnumerable<object[]> _protectedRootCases;
 
-        protected override IEnumerable<object[]> Cases
+        protected static IEnumerable<object[]> ProtectedRootCases
         {
             get
             {
@@ -48,8 +48,12 @@ namespace NConsole.Options.Data.Registration
                     }
                 }
 
-                return _privateCases ?? (_privateCases = GetAll(Nominal));
+                return _protectedRootCases ?? (_protectedRootCases = GetAll(Nominal));
             }
         }
+
+        private static IEnumerable<object[]> _privateCases;
+
+        protected override IEnumerable<object[]> Cases => _privateCases ?? (_privateCases = ProtectedRootCases);
     }
 }

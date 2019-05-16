@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Data.Parsing
@@ -6,9 +7,15 @@ namespace NConsole.Options.Data.Parsing
     using Registration;
     using static Characters;
     using static Domain;
+    using static StringComparison;
+    using static StringSplitOptions;
 
     internal abstract class OptionSetParsingTestCases : OptionSetRegistrationTestCases
     {
+        protected static bool DoesPrototypeContainName(string prototype, string name)
+            => prototype.Split(Pipe, RemoveEmptyEntries)
+                .Any(x => x.Equals(name, InvariantCultureIgnoreCase));
+
         private static IEnumerable<string> _unbundledArgumentPrefixes;
 
         protected static IEnumerable<string> UnbundledArgumentPrefixes
