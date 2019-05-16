@@ -9,13 +9,16 @@ namespace NConsole.Options.Data.Parsing
 
     internal abstract class RequiredOrOptionalOptionSetParsingTestCasesBase<T> : OptionSetParsingTestCases
     {
+        protected abstract string RenderValue(T value);
+
         // ReSharper disable once IdentifierTypo
-        protected abstract string RenderOneWordUnbunbledArgument(string prefix, string prototype
-            , char requiredOrOptional, T value);
+        protected string RenderOneWordUnbunbledArgument(string prefix, string prototype
+            , char requiredOrOptional, T value)
+            => $"{prefix}{prototype}{requiredOrOptional}{RenderValue(value)}";
 
         protected static string RenderTwoWordKeyPhrase(string prefix, string prototype) => $"{prefix}{prototype}";
 
-        protected abstract string RenderTwoWordValuePhrase(T value);
+        protected string RenderTwoWordValuePhrase(T value) => RenderValue(value);
 
         protected virtual IEnumerable<object[]> GetOneWordUnbundledCases(string currentPrototype, char requiredOrOptional, params T[] values)
         {

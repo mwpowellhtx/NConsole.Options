@@ -11,14 +11,7 @@ namespace NConsole.Options.Data.Parsing.Targets
     internal class EnumerationOptionSetParsingTestCases
         : RequiredOrOptionalOptionSetParsingTestCasesBase<StringComparison>
     {
-        private static string RenderValue(StringComparison value) => value.ToString();
-
-        // ReSharper disable once IdentifierTypo
-        protected override string RenderOneWordUnbunbledArgument(string prefix, string prototype
-            , char requiredOrOptional, StringComparison value)
-            => $"{prefix}{prototype}{requiredOrOptional}{RenderValue(value)}";
-
-        protected override string RenderTwoWordValuePhrase(StringComparison value) => RenderValue(value);
+        protected override string RenderValue(StringComparison value) => value.ToString();
 
         protected override IEnumerable<StringComparison> GetNominalValueRange()
         {

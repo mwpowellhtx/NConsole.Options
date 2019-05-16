@@ -9,14 +9,7 @@ namespace NConsole.Options.Data.Parsing.Targets
 
     internal class BooleanOptionSetParsingTestCases : RequiredOrOptionalOptionSetParsingTestCasesBase<bool>
     {
-        private static string RenderBoolean(bool value) => $"{value}".ToLower();
-
-        // ReSharper disable once IdentifierTypo
-        protected override string RenderOneWordUnbunbledArgument(string prefix, string prototype
-            , char requiredOrOptional, bool value)
-            => $"{prefix}{prototype}{requiredOrOptional}{RenderBoolean(value)}";
-
-        protected override string RenderTwoWordValuePhrase(bool value) => RenderBoolean(value);
+        protected override string RenderValue(bool value) => $"{value}".ToLower();
 
         protected override IEnumerable<bool> GetNominalValueRange()
         {
