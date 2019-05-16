@@ -334,12 +334,25 @@ namespace NConsole.Options
         }
 
         /// <summary>
-        /// 
+        /// Visits a fleshed out <paramref name="context"/> upon each of the selected the
+        /// <see cref="ArgumentEvaluationResult.Options"/>, rounding out elements such as
+        /// <see cref="OptionContext.Option"/> itself, <see cref="OptionContext.OptionName"/>,
+        /// and any <see cref="OptionContext.OptionValues"/> that may be required. We will expect
+        /// that <see cref="OptionContext.OptionIndex"/> will have been designated by virtual of
+        /// the calling Arguments loop.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="parts"></param>
-        /// <param name="args"></param>
-        /// <param name="count"></param>
+        /// <param name="context">The Current Context, at this stage we are expected to convey
+        /// the Option(s), the actual Option Name used to trigger the invocation, as contrasted
+        /// with a Option Prototype, and any further Option parameters Values. Once that is
+        /// complete we may then trigger the Option Visitation, in which case we literally visit
+        /// the Current Context upon the current Option of interest.</param>
+        /// <param name="parts">Given the Parts evaluated as either Bundled or Conventional.</param>
+        /// <param name="args">We expect to be handed the current view of the Command Line
+        /// Arguments starting from the Current, Zero-based Argument. Any Option Parameters
+        /// that require relay would either be parsed from the Current Argument, or subsequent
+        /// One based Arguments.</param>
+        /// <param name="count">Report the Count of the number of Arguments actually consumed
+        /// by this Dispatch invocation, not including the Current argument.</param>
         /// <returns></returns>
         private bool TryDispatchOptionVisit(OptionContext context, ref ArgumentEvaluationResult parts
             , IReadOnlyList<string> args, out int count)
@@ -350,9 +363,12 @@ namespace NConsole.Options
 
             string RenderEnableBoolean(bool enable) => $"{enable}".ToLower();
 
-            bool IsNeitherBundleNorArgument(string arg) => !(TryEvaluateBundle(arg, out _) || TryEvaluateArgument(arg, out _));
-
-            bool AreNeitherBundlesNorArguments(params string[] items) => items.All(IsNeitherBundleNorArgument);
+            bool VerifyIsNeitherBundleNorArgument(params int[] indexes)
+            {
+                var max = indexes.Max();
+                return args.Count > max
+                       && indexes.All(i => !(TryEvaluateBundle(args[i], out _) || TryEvaluateArgument(args[i], out _)));
+            }
 
             // Key is more of a Key at this point than a Name, used to lookup the Option.
             foreach (var (key, option) in parts.Options)
@@ -388,32 +404,28 @@ namespace NConsole.Options
                         break;
 
                     case IActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
-                                              && args.Count > 1
-                                              && IsNeitherBundleNorArgument(args[1]):
+                                              && VerifyIsNeitherBundleNorArgument(1):
 
                         context.OptionValues.Add(args[++currentCount]);
                         break;
 
                     // TODO: TBD: we will worry about additional 'separator' based key/value cases in a later iteration.
                     case IKeyValueActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue
-                                                      && args.Count > 1
-                                                      && IsNeitherBundleNorArgument(args[1]):
+                                                      && VerifyIsNeitherBundleNorArgument(1):
 
                         context.OptionValues.Add(parts.Value);
                         context.OptionValues.Add(args[++currentCount]);
                         break;
 
                     case IKeyValueActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue
-                                                      && args.Count > 1
-                                                      && IsNeitherBundleNorArgument(args[1]):
+                                                      && VerifyIsNeitherBundleNorArgument(1):
 
                         context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         context.OptionValues.Add(args[++currentCount]);
                         break;
 
                     case IKeyValueActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
-                                                      && args.Count > 2
-                                                      && AreNeitherBundlesNorArguments(args[1], args[2]):
+                                                      && VerifyIsNeitherBundleNorArgument(1, 2):
 
                         context.OptionValues.Add(args[++currentCount]);
                         context.OptionValues.Add(args[++currentCount]);
