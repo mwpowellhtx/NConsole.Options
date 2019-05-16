@@ -18,7 +18,7 @@ namespace NConsole.Options.Parsing.Targets
 
         protected ICollection<TTarget> ParsedValues => _parsedValues.AssertNotNull();
 
-        protected virtual void VerifyParsedValues(IEnumerable<TTarget> expectedValues)
+        private void VerifyParsedValues(IEnumerable<TTarget> expectedValues)
             => Assert.Equal(expectedValues, ParsedValues);
 
 #pragma warning disable xUnit1003
