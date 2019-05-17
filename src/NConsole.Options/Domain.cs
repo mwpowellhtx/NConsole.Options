@@ -9,7 +9,7 @@
     internal static class Domain
     {
         /// <summary>
-        /// &apos;&lt;&gt;&apos;
+        /// &quot;&lt;&gt;&quot;
         /// </summary>
         public static string AngleBrackets = $"{AngleBracketOpen}{AngleBracketClose}";
 
