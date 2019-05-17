@@ -58,7 +58,7 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(option));
             }
 
-            if (option.Names != null && option.Names.Length > 0)
+            if (option.Names != null && option.Names.Any())
             {
                 return option.Names[0];
             }
@@ -80,7 +80,7 @@ namespace NConsole.Options
             base.RemoveItem(index);
             var option = Items[index];
             // KeyedCollection.RemoveItem() handles the 0th item
-            for (var i = 1; i < option.Names.Length; ++i)
+            for (var i = 1; i < option.Names.Count; ++i)
             {
                 Dictionary.Remove(option.Names[i]);
             }
@@ -105,11 +105,11 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(option));
             }
 
-            var added = new List<string>(option.Names.Length);
+            var added = new List<string>(option.Names.Count);
             try
             {
                 // KeyedCollection.InsertItem/SetItem handle the 0th name.
-                for (var i = 1; i < option.Names.Length; ++i)
+                for (var i = 1; i < option.Names.Count; ++i)
                 {
                     Dictionary.Add(option.Names[i], option);
                     added.Add(option.Names[i]);
@@ -700,8 +700,10 @@ namespace NConsole.Options
             var names = option.Names;
 
             var i = GetNextOptionIndex(names, 0);
-            if (i == names.Length)
+            if (i == names.Count)
+            {
                 return false;
+            }
 
             if (names[i].Length == 1)
             {
@@ -714,7 +716,7 @@ namespace NConsole.Options
                 Write(writer, ref written, names[0]);
             }
 
-            for (i = GetNextOptionIndex(names, i + 1); i < names.Length; i = GetNextOptionIndex(names, i + 1))
+            for (i = GetNextOptionIndex(names, i + 1); i < names.Count; i = GetNextOptionIndex(names, i + 1))
             {
                 Write(writer, ref written, $"{Comma} ");
                 Write(writer, ref written, names[i].Length == 1 ? $"{Dash}" : $"{Dash}{Dash}");
@@ -735,9 +737,7 @@ namespace NConsole.Options
                     Write(writer, ref written
                         , Localizer($"{Equal}{GetArgumentName(0, option.MaximumValueCount, option.Description)}"));
 
-                    var sep = option.ValueSeparators != null && option.ValueSeparators.Length > 0
-                        ? option.ValueSeparators[0]
-                        : " ";
+                    var sep = option.Separators.Any() ? $"{option.Separators.First()}" : " ";
 
                     for (var c = 1; c < option.MaximumValueCount; ++c)
                     {
@@ -921,7 +921,7 @@ namespace NConsole.Options
 
         private static int GetLineEnd(int start, int length, string description)
         {
-            var end = Math.Min(start + length, description.Length);
+            var end = Min(start + length, description.Length);
             var sep = -1;
             for (var i = start + 1; i < end; ++i)
             {

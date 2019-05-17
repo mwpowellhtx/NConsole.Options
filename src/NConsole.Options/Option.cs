@@ -2,16 +2,22 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace NConsole.Options
 {
     using static Characters;
     using static Domain;
+    using static Option.RegexGroupNames;
     using static String;
+    using static OptionValueType;
+    using static RegexOptions;
+    using static StringSplitOptions;
 
     /// <summary>
     /// Represents an Option asset concern.
     /// </summary>
+    /// <inheritdoc />
     public abstract class Option : IOption
     {
         /// <summary>
@@ -24,30 +30,78 @@ namespace NConsole.Options
         /// </summary>
         public string Description { get; }
 
+        private readonly OptionValueType? _valueType;
+
         /// <summary>
         /// Gets the ValueType.
         /// </summary>
-        public OptionValueType? ValueType { get; }
+        public OptionValueType? ValueType => _valueType;
+
+        private int _maximumValueCount;
 
         /// <summary>
         /// Gets the MaximumValueCount.
         /// </summary>
-        public int MaximumValueCount { get; }
+        public int MaximumValueCount
+        {
+            get => _maximumValueCount;
+            private set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+
+                ArgumentException ThrowMaximumValueCount(params OptionValueType[] traits)
+                {
+                    var traitPrefix = $"{nameof(OptionValueType)}";
+
+                    string EnumeratedTraits() => traits.Any()
+                        ? Join($" {or} ", traits.Select(x => $"`{traitPrefix}{Dot}{x}'"))
+                        : "[No Traits Specified]";
+
+                    return new ArgumentException(
+                        $"Cannot provide `{nameof(value)}' of {value} for {EnumeratedTraits()}."
+                        , nameof(value));
+                }
+
+                switch (value)
+                {
+                    case 0 when ValueType.HasValue:
+                        throw ThrowMaximumValueCount(Required, Optional);
+                    default:
+                        if (value > 1 && !ValueType.HasValue)
+                        {
+                            throw ThrowMaximumValueCount();
+                        }
+
+                        break;
+                }
+
+                _maximumValueCount = value;
+            }
+        }
+
+        // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
+        /// <summary>
+        /// <see cref="Names"/> readonly backing field.
+        /// </summary>
+        private readonly string[] _names;
 
         /// <summary>
         /// Gets the Names.
         /// </summary>
-        internal string[] Names { get; }
+        internal IReadOnlyList<string> Names => _names;
 
         /// <summary>
-        /// Gets the ValueSeparators.
+        /// <see cref="Separators"/> readonly backing field.
         /// </summary>
-        internal string[] ValueSeparators { get; private set; }
+        private readonly char[] _separators;
 
         /// <summary>
-        /// <see cref="char"/> array defaults to <see cref="Equal"/> and <see cref="Colon"/>.
+        /// Gets the Value Separators.
         /// </summary>
-        private char[] NameTerminator { get; } = {Equal, Colon};
+        internal IReadOnlyList<char> Separators => _separators;
 
         /// <summary>
         /// Protected Constructor.
@@ -68,52 +122,15 @@ namespace NConsole.Options
         /// <param name="maximumValueCount"></param>
         protected Option(string prototype, string description, int maximumValueCount)
         {
-            if (prototype == null)
-            {
-                throw new ArgumentNullException(nameof(prototype));
-            }
-
-            if (IsNullOrEmpty(prototype))
-            {
-                throw new ArgumentException("Cannot be the empty string.", nameof(prototype));
-            }
-
-            if (maximumValueCount < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maximumValueCount));
-            }
-
-            Names = prototype.Split(Pipe);
             Description = description;
+
+            ParsePrototype(Prototype = prototype, out _names, out _valueType, out _separators);
+
             MaximumValueCount = maximumValueCount;
-            ValueType = ParsePrototype(Prototype = prototype);
 
-            ArgumentException ThrowMaximumValueCount(params OptionValueType[] traits)
-            {
-                var traitPrefix = $"{nameof(OptionValueType)}";
-
-                string EnumeratedTraits() => traits.Any()
-                    ? Join($" {or} ", traits.Select(x => $"`{traitPrefix}{Dot}{x}'"))
-                    : "[No Traits Specified]";
-
-                return new ArgumentException(
-                    $"Cannot provide `{nameof(maximumValueCount)}' of {maximumValueCount} for {EnumeratedTraits()}."
-                    , nameof(maximumValueCount));
-            }
-
-            if (MaximumValueCount == 0 && ValueType.HasValue)
-            {
-                throw ThrowMaximumValueCount( OptionValueType.Required, OptionValueType.Optional);
-            }
-
-            if (ValueType.HasValue && maximumValueCount > 1)
-            {
-                throw ThrowMaximumValueCount();
-            }
-
-            if (Array.IndexOf(Names, AngleBrackets) >= 0
-                && ((Names.Length == 1 && ValueType.HasValue)
-                    || (Names.Length > 1 && MaximumValueCount > 1)))
+            if (Names.Any(x => x == AngleBrackets)
+                && ((Names.Count == 1 && !ValueType.HasValue)
+                    || (Names.Count > 1 && MaximumValueCount > 1)))
             {
                 throw new ArgumentException(
                     $"The default option handler '{AngleBrackets}' cannot require values."
@@ -121,10 +138,77 @@ namespace NConsole.Options
             }
         }
 
-        // TODO: TBD: Seriously? This works? What are they here for? Testing? Would subscribers be using these?
-        public string[] GetNames() => (string[]) Names.Clone();
+        // ReSharper disable InconsistentNaming
+        internal static class RegexGroupNames
+        {
+            /// <summary>
+            /// &quot;prev&quot;
+            /// </summary>
+            internal const string prev = nameof(prev);
 
-        public string[] GetValueSeparators() => ValueSeparators == null ? new string[] { } : (string[]) ValueSeparators.Clone();
+            /// <summary>
+            /// &quot;last&quot;
+            /// </summary>
+            internal const string last = nameof(last);
+
+            /// <summary>
+            /// &quot;roo&quot;
+            /// </summary>
+            internal const string roo = nameof(roo);
+
+            /// <summary>
+            /// &quot;sep&quot;
+            /// </summary>
+            internal const string sep = nameof(sep);
+        }
+        // ReSharper restore InconsistentNaming
+
+        private Regex PrototypeRegex { get; } = new Regex(
+            @"^(?<prev>(([A-Za-z]([\w-]|[^:=])*)[|])*)(?<last>([A-Za-z]([\w-]|[^:=])*))(?<roo>[:=])?(({(?<sep>[^\w-]+)})|(?<sep>[^\w-]+))?$"
+            , Compiled);
+
+        private void ParsePrototype(string prototype, out string[] names, out OptionValueType? parsedType, out char[] separators)
+        {
+            if (IsNullOrEmpty(prototype))
+            {
+                throw new ArgumentNullException(nameof(prototype), "Prototype must contain an option specification.");
+            }
+
+            var match = PrototypeRegex.Match(prototype);
+
+            if (!match.Success)
+            {
+                throw new ArgumentException($"Invalid prototype specification: `{prototype}'.", nameof(prototype));
+            }
+
+            names = match.GetGroupValueOrDefault(prev, "")
+                .Split(new[] {Pipe}, RemoveEmptyEntries)
+                .ToArray();
+
+            var lastName = match.GetGroupValue(last);
+
+            if (lastName != null)
+            {
+                names = names.Concat(new[] {lastName}).ToArray();
+            }
+
+            if (!names.Any())
+            {
+                throw new ArgumentException("One or more argument names expected.", nameof(prototype));
+            }
+
+            OptionValueType? ParseValueType(string x)
+            {
+                var values = new Dictionary<char, OptionValueType> {{Colon, Optional}, {Equal, Required}};
+                return !IsNullOrEmpty(x) && x.Length == 1 && values.TryGetValue(x[0], out var y)
+                    ? y
+                    : (OptionValueType?) null;
+            }
+
+            parsedType = ParseValueType(match.GetGroupValueOrDefault(roo));
+
+            separators = match.GetGroupValueOrDefault(sep, "").Distinct().ToArray();
+        }
 
         /// <summary>
         /// Parses the <paramref name="value"/> given the <paramref name="context"/>.
@@ -169,137 +253,6 @@ namespace NConsole.Options
             }
 
             return defaultValue;
-        }
-
-        /// <summary>
-        /// Parses the <see cref="OptionValueType"/> given the <paramref name="prototype"/>.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <returns></returns>
-        private OptionValueType? ParsePrototype(string prototype)
-        {
-            char? parsedType = null;
-            var separators = new List<string>();
-
-            OptionValueType ReturnParsedType() => parsedType == Equal ? OptionValueType.Required : OptionValueType.Optional;
-
-            for (var i = 0; i < Names.Length; ++i)
-            {
-                var name = Names[i];
-                if (name.Length == 0)
-                {
-                    throw new ArgumentException("Empty option names are not supported.", nameof(prototype));
-                }
-
-                var end = name.IndexOfAny(NameTerminator);
-                if (end == -1)
-                {
-                    continue;
-                }
-
-                Names[i] = name.Substring(0, end);
-                if (!parsedType.HasValue || parsedType == name[end])
-                {
-                    parsedType = name[end];
-                }
-                else
-                {
-                    throw new ArgumentException($"Conflicting option types: '{parsedType}' vs. '{name[end]}'."
-                        , nameof(prototype));
-                }
-
-                AddSeparators(prototype, name, end, separators);
-            }
-
-            if (!parsedType.HasValue)
-            {
-                return null;
-            }
-
-            if (MaximumValueCount <= 1 && separators.Count != 0)
-            {
-                throw new ArgumentException(
-                    "Cannot provide key/value separators for Options taking"
-                    + $" {MaximumValueCount} value{(MaximumValueCount == 1 ? "" : "s")}."
-                    , nameof(prototype));
-            }
-
-            // ReSharper disable once InvertIf
-            if (MaximumValueCount > 1)
-            {
-                switch (separators.Count)
-                {
-                    case 0:
-                        ValueSeparators = new[] {$"{Comma}"};
-                        break;
-
-                    case 1 when !IsNullOrEmpty(separators[0]):
-                        ValueSeparators = null;
-                        break;
-
-                    default:
-                        ValueSeparators = separators.ToArray();
-                        break;
-                }
-            }
-
-            return ReturnParsedType();
-        }
-
-        // ReSharper disable once UnusedParameter.Local
-        /// <summary>
-        /// Adds <paramref name="separators"/>.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="name"></param>
-        /// <param name="end"></param>
-        /// <param name="separators"></param>
-        private void AddSeparators(string prototype, string name, int end, ICollection<string> separators)
-        {
-            var start = -1;
-
-            for (var i = end + 1; i < name.Length; ++i)
-            {
-                switch (name[i])
-                {
-                    case CurlyBracesOpen:
-
-                        if (start != -1)
-                        {
-                            throw new ArgumentException($"Ill-formed name/value separator found in `{name}'."
-                                , nameof(prototype));
-                        }
-
-                        start = i + 1;
-                        break;
-
-                    case CurlyBracesClose:
-
-                        if (start == -1)
-                        {
-                            throw new ArgumentException($"Ill-formed name/value separator found in `{name}'."
-                                , nameof(prototype));
-                        }
-
-                        separators.Add(name.Substring(start, i - start));
-                        start = -1;
-                        break;
-
-                    default:
-
-                        if (start == -1)
-                        {
-                            separators.Add($"{name[i]}");
-                        }
-
-                        break;
-                }
-            }
-
-            if (start != -1)
-            {
-                throw new ArgumentException($"Ill-formed name/value separator found in `{name}'.", nameof(prototype));
-            }
         }
 
         /// <summary>
