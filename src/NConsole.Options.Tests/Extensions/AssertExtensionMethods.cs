@@ -48,6 +48,13 @@ namespace NConsole.Options
             return value;
         }
 
+        public static T AssertEmpty<T>(this T value)
+            where T : IEnumerable
+        {
+            Assert.Empty(value);
+            return value;
+        }
+
         public static T AssertNotEmpty<T>(this T value)
             where T : IEnumerable
         {
@@ -59,6 +66,12 @@ namespace NConsole.Options
         {
             Assert.Equal(expected, actual);
             return expected;
+        }
+
+        public static T AssertEqual<T>(this T actual, T expected, IEqualityComparer<T> comparer)
+        {
+            Assert.Equal(expected, actual, comparer);
+            return actual;
         }
 
         // ReSharper disable PossibleMultipleEnumeration
@@ -99,6 +112,14 @@ namespace NConsole.Options
             }
 
             return target;
+        }
+
+        public static TException AssertThrowsException<TException>(this Action action, Action<TException> response = null)
+            where TException : Exception
+        {
+            var ex = Assert.Throws<TException>(action);
+            response?.Invoke(ex);
+            return ex;
         }
     }
 }
