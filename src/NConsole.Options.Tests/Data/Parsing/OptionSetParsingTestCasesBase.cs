@@ -10,7 +10,7 @@ namespace NConsole.Options.Data.Parsing
     using static StringComparison;
     using static StringSplitOptions;
 
-    internal abstract class OptionSetParsingTestCases : OptionSetRegistrationTestCases
+    internal abstract class OptionSetParsingTestCasesBase : OptionSetRegistrationTestCases
     {
         protected static bool DoesPrototypeContainName(string prototype, string name)
             => prototype.Split(Pipe, RemoveEmptyEntries)
