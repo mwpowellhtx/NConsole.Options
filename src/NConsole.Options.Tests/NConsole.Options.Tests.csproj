@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>1.0.0.4488</Version>
-    <AssemblyVersion>1.0.0.4488</AssemblyVersion>
-    <FileVersion>1.0.0.4488</FileVersion>
+    <Version>1.0.0.4552</Version>
+    <AssemblyVersion>1.0.0.4552</AssemblyVersion>
+    <FileVersion>1.0.0.4552</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,7 +38,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Parsing\KeyValue\" />
     <Folder Include="Data\Registration\KeyValue\" />
     <Folder Include="Data\Registration\Targets\" />
     <Folder Include="Data\Registration\Simple\" />
