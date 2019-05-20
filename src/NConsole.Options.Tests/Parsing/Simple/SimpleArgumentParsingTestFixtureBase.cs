@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace NConsole.Options.Parsing.Simple
 {
@@ -46,8 +47,8 @@ namespace NConsole.Options.Parsing.Simple
             {
                 OptionsVisited.Clear();
                 var actualUnprocessedArgs = options.Parse(args).AssertNotNull();
-                Assert.Equal(expectedValues, OptionsVisited);
-                Assert.Equal(expectedUnprocessedArgs, actualUnprocessedArgs);
+                OptionsVisited.AssertEqual(expectedValues);
+                actualUnprocessedArgs.AssertNotNull().ToArray().AssertEqual(expectedUnprocessedArgs);
             }
 
             VerifyParsingResults(Register(prototype));
