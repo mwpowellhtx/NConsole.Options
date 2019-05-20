@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Data.Parsing.Targets
@@ -9,12 +10,51 @@ namespace NConsole.Options.Data.Parsing.Targets
 
     internal class BooleanOptionSetParsingTestCases : RequiredOrOptionalOptionSetParsingTestCasesBase<bool>
     {
-        protected override string RenderValue(bool value) => $"{value}".ToLower();
+        protected override IEnumerable<string> RenderValue(bool value) => GetRange($"{value}".ToLower());
 
         protected override IEnumerable<bool> GetNominalValueRange()
         {
             yield return false;
             yield return true;
+        }
+
+        protected override IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
+            , string prefix, string currentPrototype, char? requiredOrOptional, bool value)
+        {
+            // ReSharper disable PossibleMultipleEnumeration
+            var expectedNames = prototypeNames.Where(x => DoesPrototypeContainName(currentPrototype, x)).ToArray();
+            var unexpectedNames = prototypeNames.Where(x => !DoesPrototypeContainName(currentPrototype, x)).ToArray();
+
+            foreach (var callback in RenderCaseCallbacks.ToArray())
+            {
+                var args = prototypeNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
+                // ReSharper disable once ImplicitlyCapturedClosure
+                var expectedValues = expectedNames.Select(_ => value).ToArray();
+                var unprocessedArgs = unexpectedNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
+
+                yield return GetRangeArray<object>(args, expectedValues, unprocessedArgs);
+            }
+            // ReSharper restore PossibleMultipleEnumeration
+        }
+
+        protected override IEnumerable<RenderPrototypeCasesDelegate<bool>> RenderCaseCallbacks
+        {
+            get
+            {
+                IEnumerable<string> RenderBaseCase(string prefix, string prototypeName, char? requiredOrOptional, bool value)
+                {
+                    yield return $"{prefix}{prototypeName}{(requiredOrOptional.HasValue ? $"{requiredOrOptional.Value}" : "")}{RenderValue(value).Single()}"; 
+                }
+
+                IEnumerable<string> RenderExtendedCase(string prefix, string prototypeName, char? requiredOrOptional, bool value)
+                {
+                    yield return $"{prefix}{prototypeName}";
+                    yield return $"{RenderValue(value).Single()}";
+                }
+
+                yield return RenderBaseCase;
+                yield return RenderExtendedCase;
+            }
         }
 
         private static IEnumerable<KeyValuePair<string, string>> _booleanArguments;

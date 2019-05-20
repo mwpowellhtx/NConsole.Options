@@ -1,112 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Data.Parsing
 {
-    using Kingdom.Combinatorics.Combinatorials;
     using static TestFixtureBase;
 
-    internal abstract class RequiredOrOptionalOptionSetParsingTestCasesBase<T> : OptionSetParsingTestCases
+    internal abstract class RequiredOrOptionalOptionSetParsingTestCasesBase<T> : OptionSetParsingTestCasesBase
     {
-        protected abstract string RenderValue(T value);
-
-        // ReSharper disable once IdentifierTypo
-        protected string RenderOneWordUnbunbledArgument(string prefix, string prototype
-            , char requiredOrOptional, T value)
-            => $"{prefix}{prototype}{requiredOrOptional}{RenderValue(value)}";
-
-        protected static string RenderTwoWordKeyPhrase(string prefix, string prototype) => $"{prefix}{prototype}";
-
-        protected string RenderTwoWordValuePhrase(T value) => RenderValue(value);
-
-        protected virtual IEnumerable<object[]> GetOneWordUnbundledCases(string currentPrototype, char requiredOrOptional, params T[] values)
-        {
-            if (!values.Any())
-            {
-                yield break;
-            }
-
-            var combinations = UnbundledArgumentPrefixes.Combine(values);
-
-            combinations.SilentOverflow = true;
-
-            foreach (var current in combinations)
-            {
-                var prefix = (string) current[0];
-                var value = (T) current[1];
-
-                var candidates = PrototypeNames.Select(x => new
-                {
-                    Argument = RenderOneWordUnbunbledArgument(prefix, x, requiredOrOptional, value),
-                    IsExpected = DoesPrototypeContainName(currentPrototype, x),
-                    ExpectedValue = value
-                }).ToArray();
-
-                yield return GetRangeArray<object>(
-                    candidates.Select(x => x.Argument).ToArray() // args
-                    , candidates.Where(x => x.IsExpected).Select(x => x.ExpectedValue).ToArray() // expectedValues
-                    , candidates.Where(x => !x.IsExpected).Select(x => x.Argument).ToArray() // unprocessedArgs
-                );
-            }
-        }
-
-        protected virtual IEnumerable<object[]> GetTwoWordCases(string currentPrototype, params T[] values)
-        {
-            if (!values.Any())
-            {
-                yield break;
-            }
-
-            var combinations = UnbundledArgumentPrefixes.Combine(values);
-
-            combinations.SilentOverflow = true;
-
-            bool TryAddExpectedValue(ICollection<T> expected, T value, Func<bool> predicate)
-            {
-                var previousCount = expected.Count;
-
-                if (predicate())
-                {
-                    expected.Add(value);
-                }
-
-                return expected.Count > previousCount;
-            }
-
-            foreach (var current in combinations)
-            {
-                var prefix = (string) current[0];
-                var value = (T) current[1];
-
-                // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-                var expectedValues = new List<T> { };
-
-                var candidates = PrototypeNames.SelectMany(x =>
-                {
-                    // We have to do a little more bookkeeping in these cases.
-                    var isExpected = TryAddExpectedValue(expectedValues, value
-                        , () => DoesPrototypeContainName(currentPrototype, x));
-
-                    return GetRange(
-                            RenderTwoWordKeyPhrase(prefix, x), RenderTwoWordValuePhrase(value))
-                        .Select(y => new {Argument = y, IsExpected = isExpected});
-                }).ToArray();
-
-                yield return GetRange<object>(
-                    candidates.Select(x => x.Argument).ToArray() // args
-                    , expectedValues.ToArray() // expectedValues
-                    , candidates.Where(x => !x.IsExpected).Select(x => x.Argument).ToArray() // unprocessedArgs
-                ).ToArray();
-            }
-        }
+        protected abstract IEnumerable<string> RenderValue(T value);
 
         protected abstract IEnumerable<T> GetNominalValueRange();
+
+        protected delegate IEnumerable<string> RenderPrototypeCasesDelegate<in TTarget>(
+            string prefix, string prototypeName, char? requiredOrOptional, TTarget value);
+
+        /// <summary>
+        /// Override in order to furnish the Default <typeparamref name="T"/> oriented
+        /// Case Rendering Callbacks.
+        /// </summary>
+        protected abstract IEnumerable<RenderPrototypeCasesDelegate<T>> RenderCaseCallbacks { get; }
+
+        protected abstract IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
+            , string prefix, string currentPrototype, char? requiredOrOptional, T value);
+
+        protected virtual IEnumerable<object[]> RenderCases(string prefix, string currentPrototype, char? requiredOrOptional, IEnumerable<T> values)
+        {
+            var prototypeNames = PrototypeNames.ToArray();
+
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var value in values)
+            {
+                foreach (var cases in RenderAllArguments(prototypeNames, prefix, currentPrototype, requiredOrOptional, value))
+                {
+                    yield return cases;
+                }
+            }
+        }
 
         private IEnumerable<object[]> _rootCases;
 
         private IEnumerable<object[]> RootCases
-            => _privateCases ?? (_privateCases = MergeCases(
+            => _rootCases ?? (_rootCases = MergeCases(
                    base.Cases
                    , RequiredOrOptionalCases.Where(x => x.HasValue).Select(x => (object) x)
                ));
@@ -135,9 +69,11 @@ namespace NConsole.Options.Data.Parsing
                         })
                     )
                     {
-                        // ReSharper disable once PossibleInvalidOperationException
-                        foreach (var derived in GetOneWordUnbundledCases(root.Prototype, root.RequiredOrOptional, values)
-                            .Concat(GetTwoWordCases(root.Prototype, values)))
+                        foreach (var derived in UnbundledArgumentPrefixes.SelectMany(x =>
+                                RenderCases(x, root.Prototype, root.RequiredOrOptional, values))
+                            /*.Concat(BundledArgumentPrefixes.SelectMany(x =>
+                                RenderCases(x, root.Prototype, root.RequiredOrOptional, values))
+                            )*/)
                         {
                             //                                             prototype,      description,      requiredOrOptional
                             yield return GetRange<object>(root.Prototype, root.Description, root.RequiredOrOptional)

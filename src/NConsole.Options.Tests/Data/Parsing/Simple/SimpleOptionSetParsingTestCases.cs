@@ -5,7 +5,7 @@ namespace NConsole.Options.Data.Parsing
 {
     using static TestFixtureBase;
 
-    internal class SimpleOptionSetParsingTestCases : OptionSetParsingTestCases
+    internal class SimpleOptionSetParsingTestCases : OptionSetParsingTestCasesBase
     {
         private static IEnumerable<object[]> _privateCases;
 
