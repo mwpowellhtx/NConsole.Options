@@ -5,8 +5,8 @@ namespace NConsole.Options
 {
     using Xunit.Abstractions;
     using static Characters;
+    using static String;
     using static OptionValueType;
-
 
     public abstract class OptionRegistrationTestFixtureBase : TestFixtureBase<OptionSet>
     {
@@ -19,24 +19,25 @@ namespace NConsole.Options
 
         protected static IEnumerable<char?> RequiredOrOptionalRange => GetRange<char?>(null, Equal, Colon);
 
-        protected static bool TryDressPrototype(ref string prototype, char? requiredOrOptional, out OptionValueType? expectedType)
+        protected static bool TryDressPrototype(ref string prototype, char? requiredOrOptional
+            , string separators, out OptionValueType? expectedType)
         {
             var tried = false;
 
             expectedType = null;
 
-            string Dress(string p) => $"{p}{requiredOrOptional.Value}";
+            string Dress(string p, string sep) => $"{p}{requiredOrOptional.Value}{(IsNullOrEmpty(sep) ? "" : sep)}";
 
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (requiredOrOptional)
             {
                 case Equal:
-                    prototype = Dress(prototype);
+                    prototype = Dress(prototype, separators);
                     expectedType = Required;
                     return true;
 
                 case Colon:
-                    prototype = Dress(prototype);
+                    prototype = Dress(prototype, separators);
                     expectedType = Optional;
                     return true;
 
@@ -46,6 +47,9 @@ namespace NConsole.Options
 
             return false;
         }
+
+        protected static bool TryDressPrototype(ref string prototype, char? requiredOrOptional, out OptionValueType? expectedType)
+            => TryDressPrototype(ref prototype, requiredOrOptional, null, out expectedType);
 
         protected static string RenderRequiredOrOptional(char? x) => x == null ? "null" : $"{x}";
     }
