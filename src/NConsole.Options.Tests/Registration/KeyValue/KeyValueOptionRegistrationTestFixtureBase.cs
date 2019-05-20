@@ -1,8 +1,11 @@
-﻿namespace NConsole.Options.Registration.KeyValue
+﻿using System;
+
+namespace NConsole.Options.Registration.KeyValue
 {
     using Data.Registration;
     using Xunit;
     using Xunit.Abstractions;
+    using static String;
 
     public abstract class KeyValueOptionRegistrationTestFixtureBase<TKey, TValue>
         : OptionRegistrationTestFixtureBase<OptionCallback<TKey, TValue>>
@@ -25,15 +28,18 @@
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="requiredOrOptional"></param>
+        /// <param name="separators"></param>
         /// <returns></returns>
-        protected OptionSet Register(string prototype, char? requiredOrOptional)
+        protected OptionSet Register(string prototype, char? requiredOrOptional = null, string separators = null)
         {
             var p = prototype.AssertNotNull().AssertNotEmpty();
             var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
+            var sep = separators;
 
             OutputHelper.WriteLine(
                 $"Registering Option with: Prototype=`{p}'"
                 + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+                + $", separators=`{(IsNullOrEmpty(sep) ? "null" : sep)}'"
             );
 
             TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
@@ -53,16 +59,19 @@
         /// <param name="prototype"></param>
         /// <param name="description"></param>
         /// <param name="requiredOrOptional"></param>
+        /// <param name="separators"></param>
         /// <returns></returns>
-        protected OptionSet Register(string prototype, string description, char? requiredOrOptional)
+        protected OptionSet Register(string prototype, string description, char? requiredOrOptional = null, string separators = null)
         {
             var p = prototype.AssertNotNull().AssertNotEmpty();
             var d = description.AssertNotNull().AssertNotEmpty();
             var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
+            var sep = separators;
 
             OutputHelper.WriteLine(
                 $"Registering Option with: Prototype=`{p}', Description=`{d}'"
                 + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+                + $", separators=`{(IsNullOrEmpty(sep) ? "null" : sep)}'"
             );
 
             TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
@@ -87,8 +96,27 @@
         [Theory, ClassData(typeof(RequiredOrOptionalOptionSetRegistrationTestCases))]
         public void Can_Add_Key_Value_Option(string prototype, string description, char? requiredOrOptional)
         {
-            Register(prototype, requiredOrOptional);
-            Register(prototype, description, requiredOrOptional);
+            // ReSharper disable once ImplicitlyCapturedClosure
+            Action RegisterAction() => () => Register(prototype, requiredOrOptional);
+            Action RegisterWithDescriptionAction() => () => Register(prototype, description, requiredOrOptional);
+
+            if (requiredOrOptional.HasValue)
+            {
+                RegisterAction().Invoke();
+                RegisterWithDescriptionAction().Invoke();
+                return;
+            }
+
+            void VerifyException(ArgumentException ex)
+            {
+                OutputHelper.WriteLine($"{ex.ParamName}: {ex.Message}");
+                const string value = nameof(value);
+                ex.AssertNotNull();
+                ex.ParamName.AssertEqual(value);
+            }
+
+            RegisterAction().AssertThrowsException<ArgumentException>(VerifyException);
+            RegisterWithDescriptionAction().AssertThrowsException<ArgumentException>(VerifyException);
         }
     }
 }
