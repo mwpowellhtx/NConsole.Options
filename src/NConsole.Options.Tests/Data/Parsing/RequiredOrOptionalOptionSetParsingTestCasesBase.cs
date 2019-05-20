@@ -14,6 +14,7 @@ namespace NConsole.Options.Data.Parsing
         protected delegate IEnumerable<string> RenderPrototypeCasesDelegate<in TTarget>(
             string prefix, string prototypeName, char? requiredOrOptional, TTarget value);
 
+        // ReSharper disable once UnusedMember.Global
         /// <summary>
         /// Override in order to furnish the Default <typeparamref name="T"/> oriented
         /// Case Rendering Callbacks.
