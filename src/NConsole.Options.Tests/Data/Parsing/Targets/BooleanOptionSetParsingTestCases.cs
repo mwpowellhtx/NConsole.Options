@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Data.Parsing.Targets
@@ -12,30 +11,7 @@ namespace NConsole.Options.Data.Parsing.Targets
     {
         protected override IEnumerable<string> RenderValue(bool value) => GetRange($"{value}".ToLower());
 
-        protected override IEnumerable<bool> GetNominalValueRange()
-        {
-            yield return false;
-            yield return true;
-        }
-
-        protected override IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
-            , string prefix, string currentPrototype, char? requiredOrOptional, bool value)
-        {
-            // ReSharper disable PossibleMultipleEnumeration
-            var expectedNames = prototypeNames.Where(x => DoesPrototypeContainName(currentPrototype, x)).ToArray();
-            var unexpectedNames = prototypeNames.Where(x => !DoesPrototypeContainName(currentPrototype, x)).ToArray();
-
-            foreach (var callback in RenderCaseCallbacks.ToArray())
-            {
-                var args = prototypeNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
-                // ReSharper disable once ImplicitlyCapturedClosure
-                var expectedValues = expectedNames.Select(_ => value).ToArray();
-                var unprocessedArgs = unexpectedNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
-
-                yield return GetRangeArray<object>(args, expectedValues, unprocessedArgs);
-            }
-            // ReSharper restore PossibleMultipleEnumeration
-        }
+        protected override IEnumerable<bool> NominalValues => ProtectedBooleans;
 
         protected override IEnumerable<RenderPrototypeCasesDelegate<bool>> RenderCaseCallbacks
         {

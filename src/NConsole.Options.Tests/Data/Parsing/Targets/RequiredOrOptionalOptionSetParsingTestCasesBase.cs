@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace NConsole.Options.Data.Parsing
+namespace NConsole.Options.Data.Parsing.Targets
 {
     using static TestFixtureBase;
 
@@ -9,7 +9,7 @@ namespace NConsole.Options.Data.Parsing
     {
         protected abstract IEnumerable<string> RenderValue(T value);
 
-        protected abstract IEnumerable<T> GetNominalValueRange();
+        protected abstract IEnumerable<T> NominalValues { get; }
 
         protected delegate IEnumerable<string> RenderPrototypeCasesDelegate<in TTarget>(
             string prefix, string prototypeName, char? requiredOrOptional, TTarget value);
@@ -21,8 +21,24 @@ namespace NConsole.Options.Data.Parsing
         /// </summary>
         protected abstract IEnumerable<RenderPrototypeCasesDelegate<T>> RenderCaseCallbacks { get; }
 
-        protected abstract IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
-            , string prefix, string currentPrototype, char? requiredOrOptional, T value);
+        protected virtual IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
+            , string prefix, string currentPrototype, char? requiredOrOptional, T value)
+        {
+            // ReSharper disable PossibleMultipleEnumeration
+            var expectedNames = prototypeNames.Where(x => DoesPrototypeContainName(currentPrototype, x)).ToArray();
+            var unexpectedNames = prototypeNames.Where(x => !DoesPrototypeContainName(currentPrototype, x)).ToArray();
+
+            foreach (var callback in RenderCaseCallbacks)
+            {
+                var args = prototypeNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
+                // ReSharper disable once ImplicitlyCapturedClosure
+                var expectedValues = expectedNames.Select(_ => value).ToArray();
+                var unprocessedArgs = unexpectedNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
+
+                yield return GetRangeArray<object>(args, expectedValues, unprocessedArgs);
+            }
+            // ReSharper restore PossibleMultipleEnumeration
+        }
 
         protected virtual IEnumerable<object[]> RenderCases(string prefix, string currentPrototype, char? requiredOrOptional, IEnumerable<T> values)
         {
@@ -60,7 +76,7 @@ namespace NConsole.Options.Data.Parsing
                 {
                     // TODO: TBD: this tree of test cases is potentially, borderline combinatorial in nature...
                     // TODO: TBD: potentially identifying more values than just these... things like min, max, zero, etc
-                    var values = GetNominalValueRange().ToArray();
+                    var values = NominalValues.ToArray();
 
                     foreach (var root in RootCases.Select(x => new
                         {

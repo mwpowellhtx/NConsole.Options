@@ -16,31 +16,15 @@ namespace NConsole.Options.Data.Parsing.Targets
     {
         protected override IEnumerable<string> RenderValue(StringComparison value) => GetRange(value.ToString());
 
-        protected override IEnumerable<StringComparison> GetNominalValueRange()
+        protected override IEnumerable<StringComparison> NominalValues
         {
-            foreach(StringComparison value in Enum.GetValues(typeof(StringComparison)))
+            get
             {
-                yield return value;
+                foreach (StringComparison value in Enum.GetValues(typeof(StringComparison)))
+                {
+                    yield return value;
+                }
             }
-        }
-
-        protected override IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
-            , string prefix, string currentPrototype, char? requiredOrOptional, StringComparison value)
-        {
-            // ReSharper disable PossibleMultipleEnumeration
-            var expectedNames = prototypeNames.Where(x => DoesPrototypeContainName(currentPrototype, x)).ToArray();
-            var unexpectedNames = prototypeNames.Where(x => !DoesPrototypeContainName(currentPrototype, x)).ToArray();
-
-            foreach (var callback in RenderCaseCallbacks.ToArray())
-            {
-                var args = prototypeNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
-                // ReSharper disable once ImplicitlyCapturedClosure
-                var expectedValues = expectedNames.Select(_ => value).ToArray();
-                var unprocessedArgs = unexpectedNames.SelectMany(p => callback(prefix, p, requiredOrOptional, value)).ToArray();
-
-                yield return GetRangeArray<object>(args, expectedValues, unprocessedArgs);
-            }
-            // ReSharper restore PossibleMultipleEnumeration
         }
 
         protected override IEnumerable<RenderPrototypeCasesDelegate<StringComparison>> RenderCaseCallbacks

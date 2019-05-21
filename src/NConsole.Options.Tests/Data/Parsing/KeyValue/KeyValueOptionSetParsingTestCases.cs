@@ -1,16 +1,15 @@
 ﻿//using System.Collections.Generic;
 //using System.Linq;
-//using NConsole.Options.Registration.KeyValue;
 
-//namespace NConsole.Options.Data.Parsing
+//// TODO: TBD: I do not think this one is used anywhere, per se.
+//namespace NConsole.Options.Data.Parsing.KeyValue
 //{
 //    using static TestFixtureBase;
 
-//    internal abstract class KeyValueOptionSetParsingTestCases<TKey, TValue> : KeyValueOptionRegistrationTestFixtureBase<TKey, TValue>
+//    internal abstract class KeyValueOptionSetParsingTestCases<TKey, TValue>
+//        : RequiredOrOptionalOptionSetParsingTestCasesBase<TKey, TValue>
 //    {
-//        private static IEnumerable<object[]> _privateCases;
-
-//        protected override IEnumerable<object[]> Cases
+//        protected virtual IEnumerable<object[]> ProtectedCases
 //        {
 //            get
 //            {
@@ -37,8 +36,8 @@
 
 //                    foreach (var @case in ProtectedRootCases)
 //                    {
-//                        var prototype = (string) @case[0];
-//                        var description = (string) @case[1];
+//                        var prototype = (string)@case[0];
+//                        var description = (string)@case[1];
 
 //                        yield return GetOne(prototype, description
 //                            , PrototypeNames.SelectMany(x => GetRange(x, $"{x[0]}")).ToArray()).ToArray();
@@ -51,7 +50,7 @@
 //                    }
 //                }
 
-//                return _privateCases ?? (_privateCases = GetAll().ToArray());
+//                return GetAll();
 //            }
 //        }
 //    }
