@@ -5,11 +5,11 @@ namespace NConsole.Options.Cases
     using Data.Parsing.Targets;
     using Xunit.Abstractions;
 
-    public class BooleanOptionSetParsingTestCaseTests : RequiredOrOptionalOptionSetParsingTestCaseTestFixtureBase<bool, char>
+    public class BooleanTestCaseTests : RequiredOrOptionalTestCaseTestFixtureBase<bool, char>
     {
         protected override IEnumerable<object[]> Cases { get; } = new BooleanOptionSetParsingTestCases();
 
-        public BooleanOptionSetParsingTestCaseTests(ITestOutputHelper outputHelper)
+        public BooleanTestCaseTests(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
         }

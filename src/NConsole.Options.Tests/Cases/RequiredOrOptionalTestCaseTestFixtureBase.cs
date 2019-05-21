@@ -6,9 +6,9 @@ namespace NConsole.Options.Cases
     using Xunit;
     using Xunit.Abstractions;
 
-    public abstract class RequiredOrOptionalOptionSetParsingTestCaseTestFixtureBase<T, TRequiredOrOptional> : TestFixtureBase
+    public abstract class RequiredOrOptionalTestCaseTestFixtureBase<T, TRequiredOrOptional> : TestFixtureBase
     {
-        protected RequiredOrOptionalOptionSetParsingTestCaseTestFixtureBase(ITestOutputHelper outputHelper)
+        protected RequiredOrOptionalTestCaseTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
         }
@@ -28,7 +28,6 @@ namespace NConsole.Options.Cases
                 , x => x.AssertIsType<T[]>()
                 , x => x.AssertIsType<string[]>()
             );
-
             // ReSharper restore PossibleMultipleEnumeration
         }
 

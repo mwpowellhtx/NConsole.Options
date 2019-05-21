@@ -6,11 +6,11 @@ namespace NConsole.Options.Cases
     using Data.Parsing.Targets;
     using Xunit.Abstractions;
 
-    public class IntegerOptionSetParsingTestCaseTests : RequiredOrOptionalOptionSetParsingTestCaseTestFixtureBase<int, char>
+    public class IntegerTestCaseTests : RequiredOrOptionalTestCaseTestFixtureBase<int, char>
     {
         protected override IEnumerable<object[]> Cases { get; } = new IntegerOptionSetParsingTestCases();
 
-        public IntegerOptionSetParsingTestCaseTests(ITestOutputHelper outputHelper)
+        public IntegerTestCaseTests(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
         }
