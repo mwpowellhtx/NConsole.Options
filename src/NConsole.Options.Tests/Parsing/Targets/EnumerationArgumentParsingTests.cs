@@ -31,12 +31,8 @@ namespace NConsole.Options.Parsing.Targets
         [ClassData(typeof(EnumerationOptionSetParsingTestCases))]
         public override void Can_Parse_Arguments(string prototype, string description, char requiredOrOptional
             , string[] args, StringComparison[] expectedValues, string[] unprocessedArgs)
-        {
-            Callback = ParsedValues.Add;
-
-            base.Can_Parse_Arguments(prototype, description, requiredOrOptional
+            => base.Can_Parse_Arguments(prototype, description, requiredOrOptional
                 , args, expectedValues, unprocessedArgs);
-        }
 #pragma warning restore xUnit1008
 
     }

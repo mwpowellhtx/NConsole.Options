@@ -2,58 +2,62 @@
 
 namespace NConsole.Options.Parsing.KeyValue
 {
-    using Registration.KeyValue;
+    using Targets;
     using Xunit;
     using Xunit.Abstractions;
 
-    public abstract class KeyValueArgumentParsingTestFixtureBase<TKey, TValue, TEqualityComparer>
-        : KeyValueOptionRegistrationTestFixtureBase<TKey, TValue>
-        where TEqualityComparer : class, IEqualityComparer<IEnumerable<KeyValuePair<TKey, TValue>>>, new()
+    public abstract class KeyValueArgumentParsingTestFixtureBase<TKey, TValue>
+        : OptionRegistrationTestFixtureBase<OptionCallback<TKey, TValue>>
     {
         // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
         protected virtual ICollection<KeyValuePair<TKey, TValue>> PairsVisited { get; }
             = new List<KeyValuePair<TKey, TValue>> { };
 
-        protected abstract class PairComparerBase : IEqualityComparer<IEnumerable<KeyValuePair<TKey, TValue>>>
+        // ReSharper disable UseDeconstructionOnParameter
+        protected virtual void VerifyPairVisited(KeyValuePair<TKey, TValue> expected, KeyValuePair<TKey, TValue> actual)
         {
-            public abstract bool Equals(IEnumerable<KeyValuePair<TKey, TValue>> x
-                , IEnumerable<KeyValuePair<TKey, TValue>> y);
+            void AssertEqual<T>(T x, T y) => y.AssertEqual(x);
 
-            public abstract int GetHashCode(IEnumerable<KeyValuePair<TKey, TValue>> obj);
+            AssertEqual(expected.Key, actual.Key);
+            AssertEqual(expected.Value, actual.Value);
         }
-
-        protected virtual void VerifyPairsVisited(IEnumerable<KeyValuePair<TKey, TValue>> expected
-            , IEnumerable<KeyValuePair<TKey, TValue>> actual)
-        {
-            // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-            actual.AssertEqual(expected, new TEqualityComparer { });
-        }
+        // ReSharper disable UseDeconstructionOnParameter
 
         protected KeyValueArgumentParsingTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
+            Callback = (k, v) => PairsVisited.Add(KeyValuePair.Create(k, v));
         }
+
+        //#pragma warning disable xUnit1008
+        //        [ClassData(typeof(System.String))]
+        //        public override void Can_Parse_Arguments(string prototype, string description, char requiredOrOptional
+        //            , string[] args,KeyValuePair<TKey, TValue>[] expectedValues, string[] expectedUnprocessedArgs)
+        //        {
+        //            base.Can_Parse_Arguments(prototype, description, requiredOrOptional, args, expectedValues, expectedUnprocessedArgs);
+        //        }
+        //#pragma warning restore xUnit1008
 
 #pragma warning disable xUnit1003
         /// <summary>
-        /// 
+        /// Verifies that the <see cref="OptionSet"/> Can Parse the <paramref name="args"/>.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
-        /// <param name="args"></param>
         /// <param name="requiredOrOptional"></param>
-        /// <param name="separators"></param>
+        /// <param name="args"></param>
+        /// <param name="expectedValues"></param>
         /// <param name="expectedUnprocessedArgs"></param>
         [Theory]
-        public virtual void Can_Parse_Arguments(string prototype, string description, string[] args
-            , char? requiredOrOptional, string separators, KeyValuePair<TKey, TValue>[] expectedPairs
-            , string[] expectedUnprocessedArgs
+        public virtual void Can_Parse_Arguments(string prototype, string description, char requiredOrOptional
+            , string[] args, KeyValuePair<TKey, TValue>[] expectedValues, string[] expectedUnprocessedArgs
         )
         {
-            PairsVisited.AssertNotNull().AssertEmpty();
+            PairsVisited.AssertNotNull();
 
+            // The Option Registration verifies Prototype, Description, etc.
             args.AssertNotNull().AssertNotEmpty();
-            expectedPairs.AssertNotNull();
+            expectedValues.AssertNotNull();
             expectedUnprocessedArgs.AssertNotNull();
 
             // Clears the Parsed Values prior to the Next Parsing Attempt.
@@ -61,13 +65,12 @@ namespace NConsole.Options.Parsing.KeyValue
             {
                 PairsVisited.Clear();
                 var actualUnprocessedArgs = options.Parse(args).AssertNotNull();
-                // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
-                PairsVisited.AssertEqual(expectedPairs, new TEqualityComparer { });
-                actualUnprocessedArgs.AssertNotNull().ToArray().AssertEqual(expectedUnprocessedArgs);
+                Assert.Equal(expectedValues, PairsVisited);
+                Assert.Equal(expectedUnprocessedArgs, actualUnprocessedArgs);
             }
 
-            VerifyParsingResults(Register(prototype, requiredOrOptional, separators));
-            VerifyParsingResults(Register(prototype, description, requiredOrOptional, separators));
+            VerifyParsingResults(Register(prototype, requiredOrOptional));
+            VerifyParsingResults(Register(prototype, description, requiredOrOptional));
         }
 #pragma warning restore xUnit1003
 

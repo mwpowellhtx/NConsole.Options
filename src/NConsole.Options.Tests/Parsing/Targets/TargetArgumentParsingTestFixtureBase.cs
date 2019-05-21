@@ -6,11 +6,13 @@ namespace NConsole.Options.Parsing.Targets
     using Xunit.Abstractions;
     using NConsole.Options.Registration.Targets;
 
-    public abstract class TargetArgumentParsingTestFixtureBase<TTarget> : TargetOptionRegistrationTestFixtureBase<TTarget>
+    public abstract class TargetArgumentParsingTestFixtureBase<TTarget>
+        : TargetOptionRegistrationTestFixtureBase<TTarget>
     {
         protected TargetArgumentParsingTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
+            Callback = ParsedValues.Add;
         }
 
         // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
