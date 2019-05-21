@@ -42,5 +42,17 @@
         /// <see cref="Plus"/>
         /// <see cref="Dash"/>
         public static readonly string BooleanFlags = $"{Plus}{Dash}";
+
+        /// <summary>
+        /// &quot;,&quot;
+        /// </summary>
+        /// <see cref="Comma"/>
+        public static readonly string DefaultSeparators = $"{Comma}";
+
+        /// <summary>
+        /// Gets the DefaultSeparator.
+        /// </summary>
+        /// <see cref="Comma"/>
+        public static char DefaultSeparator => Comma;
     }
 }
