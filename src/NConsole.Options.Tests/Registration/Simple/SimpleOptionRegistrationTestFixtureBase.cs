@@ -1,15 +1,17 @@
-﻿namespace NConsole.Options.Registration.Simple
+﻿using System.Collections.Generic;
+
+namespace NConsole.Options.Registration.Simple
 {
     using Data.Registration;
     using Xunit;
     using Xunit.Abstractions;
 
-    public abstract class SimpleOptionRegistrationTestFixtureBase
-        : OptionRegistrationTestFixtureBase<OptionCallback>
+    public abstract class SimpleOptionRegistrationTestFixtureBase : OptionRegistrationTestFixtureBase<OptionCallback>
     {
         protected SimpleOptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper)
-            : base(outputHelper, () => { })
+            : base(outputHelper)
         {
+            Callback = () => { };
         }
 
         protected override OptionSet Add(OptionSet options, string prototype, OptionCallback callback)
@@ -17,6 +19,16 @@
 
         protected override OptionSet Add(OptionSet options, string prototype, string description, OptionCallback callback)
             => options.Add(prototype, description, callback);
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<SimpleActionOption>(o, prototype, expectedType)
+            );
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, string description, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<SimpleActionOption>(o, prototype, description, expectedType)
+            );
 
         /// <summary>
         /// Registration serves to verify Option Registration as well as Argument Parsing.

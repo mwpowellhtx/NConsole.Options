@@ -1,7 +1,7 @@
-﻿using Xunit.Abstractions;
-
-namespace NConsole.Options.Registration.Targets
+﻿namespace NConsole.Options.Registration.Targets
 {
+    using Xunit.Abstractions;
+
     public class LongTargetOptionRegistrationTests : TargetOptionRegistrationTestFixtureBase<long>
     {
         public LongTargetOptionRegistrationTests(ITestOutputHelper outputHelper)

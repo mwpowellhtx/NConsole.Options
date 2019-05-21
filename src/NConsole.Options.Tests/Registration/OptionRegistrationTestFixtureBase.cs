@@ -65,24 +65,75 @@ namespace NConsole.Options
         /// </summary>
         protected TCallback Callback
         {
-            get => _callback;
+            get => _callback.AssertNotNull();
             set => _callback = value.AssertNotNull();
-    }
+        }
 
         /// <summary>
-        /// Default behavior suggests that we should be able to handle a Default
-        /// <paramref name="callback"/>.
+        /// 
         /// </summary>
         /// <param name="outputHelper"></param>
-        /// <param name="callback"></param>
-        protected OptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper, TCallback callback)
+        protected OptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
-            Callback = callback;
         }
 
         protected abstract OptionSet Add(OptionSet options, string prototype, TCallback callback);
 
         protected abstract OptionSet Add(OptionSet options, string prototype, string description, TCallback callback);
+
+        protected abstract IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, OptionValueType? expectedType);
+
+        protected abstract IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, string description, OptionValueType? expectedType);
+
+        /// <summary>
+        /// Registration serves to verify Option Registration as well as Argument Parsing.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="requiredOrOptional"></param>
+        /// <returns></returns>
+        protected OptionSet Register(string prototype, char? requiredOrOptional = null)
+        {
+            var p = prototype.AssertNotNull().AssertNotEmpty();
+            var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
+
+            OutputHelper.WriteLine(
+                $"Registering OptionSet with: Prototype=`{p}'"
+                + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+            );
+
+            TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
+
+            return RegisterOptions(
+                o => VerifyOptions(Add(o, p, Callback).AssertNotNull()
+                    , p, expectedType)
+            ).AssertNotNull();
+        }
+
+        /// <summary>
+        /// Registration serves to verify Option Registration as well as Argument Parsing.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="requiredOrOptional"></param>
+        /// <returns></returns>
+        protected OptionSet Register(string prototype, string description, char? requiredOrOptional = null)
+        {
+            var p = prototype.AssertNotNull().AssertNotEmpty();
+            var d = description.AssertNotNull().AssertNotEmpty();
+            var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
+
+            OutputHelper.WriteLine(
+                $"Registering OptionSet with: Prototype=`{p}', Description=`{d}'"
+                + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+            );
+
+            TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
+
+            return RegisterOptions(
+                o => VerifyOptions(Add(o, p, d, Callback).AssertNotNull()
+                    , p, d, expectedType)
+            ).AssertNotNull();
+        }
     }
 }

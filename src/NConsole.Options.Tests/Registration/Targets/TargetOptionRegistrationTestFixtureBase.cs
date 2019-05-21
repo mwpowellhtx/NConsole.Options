@@ -1,4 +1,6 @@
-﻿namespace NConsole.Options.Registration.Targets
+﻿using System.Collections.Generic;
+
+namespace NConsole.Options.Registration.Targets
 {
     using Data.Registration;
     using Xunit;
@@ -8,73 +10,26 @@
         : OptionRegistrationTestFixtureBase<OptionCallback<TTarget>>
     {
         protected TargetOptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper)
-            : base(outputHelper, _ => { })
+            : base(outputHelper)
         {
+            Callback = _ => { };
         }
 
-        protected override OptionSet Add(OptionSet options, string prototype
-            , OptionCallback<TTarget> callback)
+        protected override OptionSet Add(OptionSet options, string prototype, OptionCallback<TTarget> callback)
             => options.Add(prototype, callback);
 
-        protected override OptionSet Add(OptionSet options, string prototype
-            , string description, OptionCallback<TTarget> callback)
+        protected override OptionSet Add(OptionSet options, string prototype, string description, OptionCallback<TTarget> callback)
             => options.Add(prototype, description, callback);
 
-        /// <summary>
-        /// Registration serves to verify Option Registration as well as Argument Parsing.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="requiredOrOptional"></param>
-        /// <returns></returns>
-        protected OptionSet Register(string prototype, char? requiredOrOptional = null)
-        {
-            var p = prototype.AssertNotNull().AssertNotEmpty();
-            var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
-
-            OutputHelper.WriteLine(
-                $"Registering OptionSet with: Prototype=`{p}'"
-                + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<ActionOption<TTarget>>(o, prototype, expectedType)
             );
 
-            TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
-
-            return RegisterOptions(
-                o => Add(o, p, Callback)
-                    .AssertNotNull()
-                    .AssertCollection(
-                        x => VerifyOption<ActionOption<TTarget>>(x, p, expectedType)
-                    )
-            ).AssertNotNull();
-        }
-
-        /// <summary>
-        /// Registration serves to verify Option Registration as well as Argument Parsing.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="description"></param>
-        /// <param name="requiredOrOptional"></param>
-        /// <returns></returns>
-        protected OptionSet Register(string prototype, string description, char? requiredOrOptional = null)
-        {
-            var p = prototype.AssertNotNull().AssertNotEmpty();
-            var d = description.AssertNotNull().AssertNotEmpty();
-            var roo = requiredOrOptional.AssertContainedBy(RequiredOrOptionalRange, RequiredOrOptionalPredicate);
-
-            OutputHelper.WriteLine(
-                $"Registering OptionSet with: Prototype=`{p}', Description=`{d}'"
-                + $", RequiredOrOptional=`{RenderRequiredOrOptional(roo)}'"
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, string description, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<ActionOption<TTarget>>(o, prototype, description, expectedType)
             );
-
-            TryDressPrototype(ref p, roo, out var expectedType).AssertTrue();
-
-            return RegisterOptions(
-                o => Add(o, p, d, Callback)
-                    .AssertNotNull()
-                    .AssertCollection(
-                        x => VerifyOption<ActionOption<TTarget>>(x, p, d, expectedType)
-                    )
-            );
-        }
 
         /// <summary>
         /// The basic paths to adding <see cref="ActionOption{TTarget}"/> involve

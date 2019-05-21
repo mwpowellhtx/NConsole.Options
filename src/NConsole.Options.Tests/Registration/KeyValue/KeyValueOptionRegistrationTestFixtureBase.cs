@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace NConsole.Options.Registration.KeyValue
 {
@@ -11,17 +12,26 @@ namespace NConsole.Options.Registration.KeyValue
         : OptionRegistrationTestFixtureBase<OptionCallback<TKey, TValue>>
     {
         protected KeyValueOptionRegistrationTestFixtureBase(ITestOutputHelper outputHelper)
-            : base(outputHelper, (_, __) => { })
+            : base(outputHelper)
         {
+            Callback = (_, __) => { };
         }
 
-        protected override OptionSet Add(OptionSet options, string prototype
-            , OptionCallback<TKey, TValue> callback)
+        protected override OptionSet Add(OptionSet options, string prototype, OptionCallback<TKey, TValue> callback)
             => options.Add(prototype, callback);
 
-        protected override OptionSet Add(OptionSet options, string prototype
-            , string description, OptionCallback<TKey, TValue> callback)
+        protected override OptionSet Add(OptionSet options, string prototype, string description, OptionCallback<TKey, TValue> callback)
             => options.Add(prototype, description, callback);
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<KeyValueActionOption<TKey, TValue>>(o, prototype, expectedType)
+            );
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, string description, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<KeyValueActionOption<TKey, TValue>>(o, prototype, description, expectedType)
+            );
 
         /// <summary>
         /// Registration serves to verify Option Registration as well as Argument Parsing.
