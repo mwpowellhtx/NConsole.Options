@@ -475,8 +475,7 @@ namespace NConsole.Options
             /// </summary>
             internal ICollection<Tuple<string, Option>> Options { get; }
 
-            // TODO: TBD: what to do about Separator ...
-            internal string Separator { get; }
+            internal OptionValueType? RequiredOrOptional { get; }
 
             /// <summary>
             /// Gets or Sets the Value.
@@ -506,9 +505,9 @@ namespace NConsole.Options
             /// </summary>
             /// <param name="flag"></param>
             /// <param name="name"></param>
-            /// <param name="separator"></param>
+            /// <param name="requiredOrOptional"></param>
             /// <param name="value"></param>
-            internal ArgumentEvaluationResult(string flag = null, string name = null, string separator = null, string value = null)
+            internal ArgumentEvaluationResult(string flag = null, string name = null, OptionValueType? requiredOrOptional = null, string value = null)
             {
                 // Defer evaluation of the Last character in the Name enumerated value.
                 char NameLast() => name.Last();
@@ -522,8 +521,7 @@ namespace NConsole.Options
                         ? name.Substring(0, name.Length - 1)
                         : name;
 
-                // TODO: TBD: what to do about 'Separators'
-                Separator = separator;
+                RequiredOrOptional = requiredOrOptional;
 
                 // TODO: TBD: which Value may be the a special case of Enable Boolean.
                 Value = value;
@@ -581,9 +579,9 @@ namespace NConsole.Options
             public const string bundle = nameof(bundle);
 
             /// <summary>
-            /// &quot;sep&quot;
+            /// &quot;roo&quot;, short for Required Or Optional.
             /// </summary>
-            public const string sep = nameof(sep);
+            public const string roo = nameof(roo);
 
             /// <summary>
             /// &quot;val&quot;
@@ -626,7 +624,7 @@ namespace NConsole.Options
             return true;
         }
 
-        private Regex ValueOptionRegex { get; } = new Regex(@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<val>.*))?$", Compiled);
+        private Regex ValueOptionRegex { get; } = new Regex(@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<roo>[:=])(?<val>.*))?$", Compiled);
 
         private bool TryEvaluateArgument(string arg, out ArgumentEvaluationResult result)
         {
@@ -639,7 +637,7 @@ namespace NConsole.Options
 
             result = match.Success && match.AreGroupsSuccessful(flag, name)
                 ? new ArgumentEvaluationResult(match.GetGroupValue(flag), match.GetGroupValue(name)
-                    , match.GetGroupValueOrDefault(sep), match.GetGroupValueOrDefault(val))
+                    , match.GetGroupValueOrDefault(roo).ToOptionValueType(), match.GetGroupValueOrDefault(val))
                 : ArgumentEvaluationResult.Failed;
 
             if (!result.IsValid)
@@ -647,6 +645,7 @@ namespace NConsole.Options
                 return false;
             }
 
+            // Remember, here we are evaluating the COMMAND LINE ARGUMENT itself.
             result.Options.Add(Tuple.Create(
                 result.Name
                 , Contains(result.Name) ? this[result.Name] : DefaultOption
