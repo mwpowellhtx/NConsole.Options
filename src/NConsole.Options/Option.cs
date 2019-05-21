@@ -197,17 +197,9 @@ namespace NConsole.Options
                 throw new ArgumentException("One or more argument names expected.", nameof(prototype));
             }
 
-            OptionValueType? ParseValueType(string x)
-            {
-                var values = new Dictionary<char, OptionValueType> {{Colon, Optional}, {Equal, Required}};
-                return !IsNullOrEmpty(x) && x.Length == 1 && values.TryGetValue(x[0], out var y)
-                    ? y
-                    : (OptionValueType?) null;
-            }
+            parsedType = match.GetGroupValueOrDefault(roo).ToOptionValueType();
 
-            parsedType = ParseValueType(match.GetGroupValueOrDefault(roo));
-
-            separators = match.GetGroupValueOrDefault(sep, "").Distinct().ToArray();
+            separators = match.GetGroupValueOrDefault(sep, DefaultSeparators).Distinct().ToArray();
         }
 
         /// <summary>
