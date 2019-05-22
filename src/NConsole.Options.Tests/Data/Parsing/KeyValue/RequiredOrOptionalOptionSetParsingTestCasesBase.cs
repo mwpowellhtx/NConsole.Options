@@ -24,7 +24,7 @@ namespace NConsole.Options.Data.Parsing.KeyValue
             {
                 var combinations = NominalPairKeys.Combine(NominalPairValues);
 
-                combinations.SilentOverflow = false;
+                combinations.SilentOverflow = true;
 
                 foreach (var current in combinations)
                 {
