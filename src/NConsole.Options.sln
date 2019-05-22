@@ -10,7 +10,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{C9414D97-6D88-4A42-BF49-F8E8D794B0B0}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
+		..\LICENSE = ..\LICENSE
 		NuGet.Config = NuGet.Config
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B08BB80E-2D83-473D-9A82-C24CD2626C4B}"
