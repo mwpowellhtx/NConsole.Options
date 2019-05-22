@@ -334,6 +334,11 @@ namespace NConsole.Options
         }
 
         /// <summary>
+        /// Gets an array of <see cref="bool"/> <see cref="Type"/> possibilities.
+        /// </summary>
+        private static readonly Type[] BooleanTypes = {typeof(bool), typeof(bool?)};
+
+        /// <summary>
         /// Visits a fleshed out <paramref name="context"/> upon each of the selected the
         /// <see cref="ArgumentEvaluationResult.Options"/>, rounding out elements such as
         /// <see cref="OptionContext.Option"/> itself, <see cref="OptionContext.OptionName"/>,
@@ -360,6 +365,10 @@ namespace NConsole.Options
             var dispatched = 0;
 
             count = 0;
+
+            // ReSharper disable once RedundantAssignment
+            bool IsBooleanType(Type targetType) => BooleanTypes.Any(t => targetType == t);
+            bool IsNotBooleanType(Type targetType) => BooleanTypes.All(t => targetType != t);
 
             string RenderEnableBoolean(bool enable) => $"{enable}".ToLower();
 
@@ -423,31 +432,42 @@ namespace NConsole.Options
 
                     case IKeyValueActionOption _ when parts.HasValue
                                                       && !parts.EnableBoolean.HasValue
-                                                      && TryUnbundleKeyValuePair(parts.Value, context.Option.Separators.ToArray(), out var xy):
+                                                      && context.HasOption
+                                                      && TryUnbundleKeyValuePair(parts.Value, context.Option?.Separators?.ToArray(), out var xy):
 
                         context.OptionValues.Add(xy[0]);
                         context.OptionValues.Add(xy[1]);
                         break;
 
-                    case IKeyValueActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue
+                    // Always assume the Boolean Shorthand is the Value member of the Key Value Pair.
+                    case IKeyValueActionOption o when parts.HasValue
+                                                      && parts.EnableBoolean.HasValue
+                                                      && o.TryVerifyKeyValueActionOptionTypes(valueTypeCallback: IsBooleanType):
+
+                        context.OptionValues.Add(parts.Value);
+                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        break;
+
+                    // After handling the specific leading edge use case, then we may significantly reduce subsequent case load.
+                    case IKeyValueActionOption o when !parts.HasValue
+                                                      && parts.EnableBoolean.HasValue
+                                                      && o.TryVerifyKeyValueActionOptionTypes(IsNotBooleanType, IsBooleanType)
                                                       && VerifyIsNeitherBundleNorArgument(1):
 
-                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         context.OptionValues.Add(args[++currentCount]);
+                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         break;
 
                     case IKeyValueActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
                                                       && VerifyIsNeitherBundleNorArgument(1, 2):
 
-                        // TODO: TBD: so we are supporting the boolean +- ...
-                        // TODO: TBD: it might be interesting to support <val/>[+-]
-                        // TODO: TBD: or would we want to support [+-]<val/>, depending on the pair specification?
                         context.OptionValues.Add(args[++currentCount]);
                         context.OptionValues.Add(args[++currentCount]);
                         break;
 
                     default:
 
+                        //// ReSharper disable once CommentTypo
                         //throw new OptionException(
                         //    Format(Localizer("Invalid `{0}' parameter specification discovered.")
                         //        , context.OptionName)
@@ -490,7 +510,8 @@ namespace NConsole.Options
             /// </summary>
             internal ICollection<Tuple<string, Option>> Options { get; }
 
-            internal OptionValueType? RequiredOrOptional { get; }
+            // ReSharper disable once UnusedAutoPropertyAccessor.Local
+            private OptionValueType? RequiredOrOptional { get; }
 
             /// <summary>
             /// Gets or Sets the Value.
@@ -498,18 +519,30 @@ namespace NConsole.Options
             internal string Value { get; set; }
 
             /// <summary>
-            /// Feeds the <see cref="EnableBoolean"/> indicator.
+            /// Gets the BooleanFlag.
             /// </summary>
-            /// <see cref="EnableBoolean"/>
-            private Lazy<bool?> LazyEnableBoolean { get; }
+            /// <see cref="Plus"/>
+            /// <see cref="Dash"/>
+            private char? BooleanFlag { get; }
 
             /// <summary>
-            /// Gets the <see cref="Lazy{T}"/> initialized Boolean whether to Enable the Option.
-            /// Optionally indicates whether to Enable or Disable the Option accordingly.
+            /// 
             /// </summary>
             /// <see cref="BooleanFlags"/>
-            /// <see cref="LazyEnableBoolean"/>
-            internal bool? EnableBoolean => LazyEnableBoolean.Value;
+            /// <see cref="Value"/>
+            internal bool? EnableBoolean
+            {
+                get
+                {
+                    // ReSharper disable once SwitchStatementMissingSomeCases
+                    switch (BooleanFlag)
+                    {
+                        case Plus: return true;
+                        case Dash: return false;
+                    }
+                    return null;
+                }
+            }
 
             // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
             internal static readonly ArgumentEvaluationResult Failed = new ArgumentEvaluationResult { };
@@ -524,44 +557,42 @@ namespace NConsole.Options
             /// <param name="value"></param>
             internal ArgumentEvaluationResult(string flag = null, string name = null, OptionValueType? requiredOrOptional = null, string value = null)
             {
-                // Defer evaluation of the Last character in the Name enumerated value.
-                char NameLast() => name.Last();
+                bool IsNotNullOrEmpty(string s) => !IsNullOrEmpty(s);
+
+                // TODO: TBD: We may want to preclude circumstances in which we potentially discover both.
+                // We need to Extrapolate the Boolean Flag from either the Name or the Value.
+                char? VerifyBooleanFlag(ref string s)
+                {
+                    var result = IsNotNullOrEmpty(s) && BooleanFlags.Contains(s.Last()) ? (char?) s.Last() : null;
+                    s = result.HasValue ? s.Substring(0, s.Length - 1) : s;
+                    return result;
+                }
 
                 Flag = flag;
 
-                // Set the Name without any appended Boolean Flags.
-                Name = IsNullOrEmpty(name)
-                    ? null
-                    : BooleanFlags.Contains(NameLast())
-                        ? name.Substring(0, name.Length - 1)
-                        : name;
+                BooleanFlag = VerifyBooleanFlag(ref name) ?? VerifyBooleanFlag(ref value);
 
-                RequiredOrOptional = requiredOrOptional;
-
-                // TODO: TBD: which Value may be the a special case of Enable Boolean.
+                // We may now Set the now-normalized Name and Value.
+                Name = name;
                 Value = value;
 
-                LazyEnableBoolean = new Lazy<bool?>(() =>
-                {
-                    //                                                 +    (true),  -    (false)
-                    var booleanFlagsMap = new Dictionary<char, bool> {{Plus, true}, {Dash, false}};
-                    return !IsNullOrEmpty(name)
-                           && booleanFlagsMap.TryGetValue(NameLast(), out var x)
-                        ? x
-                        : (bool?) null;
-                });
+                RequiredOrOptional = requiredOrOptional;
 
                 // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
                 Options = new List<Tuple<string, Option>> { };
             }
 
             /// <summary>
-            /// Gets whether the Evaluation IsValid. Valid when we Have a Flag and a Name.
-            /// Additionally, we do not expect BOTH <see cref="Value"/> and
-            /// <see cref="EnableBoolean"/> to have occurred.
+            /// Gets whether the Evaluation IsValid. Valid when we Have a Flag and a Name,
+            /// this is the bottom line. The argument string may not contain EITHER
+            /// <see cref="Value"/> OR <see cref="EnableBoolean"/>. It is for the Invocation
+            /// Switch patterns to delegate what is appropriate in response to this condition.
             /// </summary>
-            internal bool IsValid => !(IsNullOrEmpty(Flag) && IsNullOrEmpty(Name))
-                                     && !(!IsNullOrEmpty(Value) && EnableBoolean.HasValue);
+            /// <see cref="Flag"/>
+            /// <see cref="Name"/>
+            /// <see cref="Value"/>
+            /// <see cref="EnableBoolean"/>
+            internal bool IsValid => !(IsNullOrEmpty(Flag) || IsNullOrEmpty(Name));
 
             internal bool IsBundled => Flag == $"{Dash}" && !IsNullOrEmpty(Name);
 
