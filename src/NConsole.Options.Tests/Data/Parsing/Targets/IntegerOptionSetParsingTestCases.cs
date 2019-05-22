@@ -26,7 +26,7 @@ namespace NConsole.Options.Data.Parsing.Targets
             {
                 IEnumerable<string> RenderBaseCase(string prefix, string prototypeName, char? requiredOrOptional, int value)
                 {
-                    yield return $"{prefix}{prototypeName}{(requiredOrOptional.HasValue ? $"{requiredOrOptional.Value}" : "")}{RenderValue(value).Single()}";
+                    yield return $"{prefix}{prototypeName}{RenderRequiredOrOptional(requiredOrOptional)}{RenderValue(value).Single()}";
                 }
 
                 IEnumerable<string> RenderExtendedCase(string prefix, string prototypeName, char? requiredOrOptional, int value)

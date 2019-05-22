@@ -7,11 +7,19 @@ namespace NConsole.Options.Data.Parsing
     using Registration;
     using static Characters;
     using static Domain;
+    using static String;
+    using static TestFixtureBase;
     using static StringComparison;
     using static StringSplitOptions;
 
     internal abstract class OptionSetParsingTestCasesBase : OptionSetRegistrationTestCases
     {
+        protected static string RenderRequiredOrOptional(char? value) => value.HasValue ? $"{value.Value}" : "";
+
+        protected static string RenderParts(params string[] parts) => Join(DefaultSeparator, parts);
+
+        protected static char RenderBooleanShorthand(bool value) => value ? Plus : Dash;
+
         protected static string RenderCharacter(char value) => $"{value}";
 
         protected static string RenderInteger(int value) => $"{value}";
@@ -53,11 +61,20 @@ namespace NConsole.Options.Data.Parsing
             yield return false;
         }
 
+        /// <summary>
+        /// Returns a set of deterministic <see cref="Guid"/>.
+        /// </summary>
+        /// <returns></returns>
         private static IEnumerable<Guid> GetUniversalUniqueIdentifierRange()
         {
-            yield return Guid.NewGuid();
-            yield return Guid.NewGuid();
-            yield return Guid.NewGuid();
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var x in GetRange(
+                "ae5d58c1-11cd-4d4f-8c22-158424943aa0"
+                , "e511e193-7f1f-4689-b6b7-b934c61fa90b"
+                , "723b0388-0c2a-48ac-b2dd-380b8cbf7e54"))
+            {
+                yield return Guid.Parse(x);
+            }
         }
 
         private static Lazy<IEnumerable<int>> PrivateLazyIntegers { get; }

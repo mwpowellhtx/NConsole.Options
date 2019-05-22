@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Data.Parsing.KeyValue
 {
     using Kingdom.Combinatorics.Combinatorials;
     using Targets;
-    using static Domain;
-    using static String;
 
     internal abstract class RequiredOrOptionalOptionSetParsingTestCasesBase<TKey, TValue>
         : RequiredOrOptionalOptionSetParsingTestCasesBase<KeyValuePair<TKey, TValue>>
@@ -61,28 +58,21 @@ namespace NConsole.Options.Data.Parsing.KeyValue
         {
             get
             {
-                string RenderRequiredOrOptional(char? value) => value.HasValue ? $"{value.Value}" : "";
-
-                string RenderParts(params string[] parts) => Join(DefaultSeparator, parts);
-
                 // We will assume a Default Separator for purposes of unit tests.
-                IEnumerable<string> RenderFullyBundledCase(string prefix, string prototypeName,
-                    char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
+                IEnumerable<string> RenderFullyBundledCase(string prefix, string prototypeName, char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
                 {
                     var rendered = RenderValue(value).ToArray();
                     yield return $"{prefix}{prototypeName}{RenderRequiredOrOptional(requiredOrOptional)}{RenderParts(rendered)}";
                 }
 
-                IEnumerable<string> RenderPartiallyBundledCase(string prefix, string prototypeName,
-                    char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
+                IEnumerable<string> RenderPartiallyBundledCase(string prefix, string prototypeName, char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
                 {
                     var rendered = RenderValue(value).ToArray();
                     yield return $"{prefix}{prototypeName}{RenderRequiredOrOptional(requiredOrOptional)}{rendered[0]}";
                     yield return rendered[1];
                 }
 
-                IEnumerable<string> RenderIndividualPartsCase(string prefix, string prototypeName,
-                    char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
+                IEnumerable<string> RenderIndividualPartsCase(string prefix, string prototypeName, char? requiredOrOptional, KeyValuePair<TKey, TValue> value)
                 {
                     var rendered = RenderValue(value).ToArray();
                     yield return $"{prefix}{prototypeName}";

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace NConsole.Options.Data.Parsing.Targets
 {
@@ -24,26 +23,6 @@ namespace NConsole.Options.Data.Parsing.Targets
                 {
                     yield return value;
                 }
-            }
-        }
-
-        protected override IEnumerable<RenderPrototypeCasesDelegate<StringComparison>> RenderCaseCallbacks
-        {
-            get
-            {
-                IEnumerable<string> RenderBaseCase(string prefix, string prototypeName, char? requiredOrOptional, StringComparison value)
-                {
-                    yield return $"{prefix}{prototypeName}{(requiredOrOptional.HasValue ? $"{requiredOrOptional.Value}" : "")}{RenderValue(value).Single()}";
-                }
-
-                IEnumerable<string> RenderExtendedCase(string prefix, string prototypeName, char? requiredOrOptional, StringComparison value)
-                {
-                    yield return $"{prefix}{prototypeName}";
-                    yield return $"{RenderValue(value).Single()}";
-                }
-
-                yield return RenderBaseCase;
-                yield return RenderExtendedCase;
             }
         }
     }

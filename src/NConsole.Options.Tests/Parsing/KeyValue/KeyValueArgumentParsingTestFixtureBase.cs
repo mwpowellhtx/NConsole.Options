@@ -12,16 +12,6 @@ namespace NConsole.Options.Parsing.KeyValue
         protected virtual ICollection<KeyValuePair<TKey, TValue>> PairsVisited { get; }
             = new List<KeyValuePair<TKey, TValue>> { };
 
-        // ReSharper disable UseDeconstructionOnParameter
-        protected virtual void VerifyPairVisited(KeyValuePair<TKey, TValue> expected, KeyValuePair<TKey, TValue> actual)
-        {
-            void AssertEqual<T>(T x, T y) => y.AssertEqual(x);
-
-            AssertEqual(expected.Key, actual.Key);
-            AssertEqual(expected.Value, actual.Value);
-        }
-        // ReSharper disable UseDeconstructionOnParameter
-
         protected KeyValueArgumentParsingTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {

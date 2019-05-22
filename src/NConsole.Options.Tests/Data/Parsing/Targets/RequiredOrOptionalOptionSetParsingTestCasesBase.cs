@@ -19,7 +19,25 @@ namespace NConsole.Options.Data.Parsing.Targets
         /// Override in order to furnish the Default <typeparamref name="T"/> oriented
         /// Case Rendering Callbacks.
         /// </summary>
-        protected abstract IEnumerable<RenderPrototypeCasesDelegate<T>> RenderCaseCallbacks { get; }
+        protected virtual IEnumerable<RenderPrototypeCasesDelegate<T>> RenderCaseCallbacks
+        {
+            get
+            {
+                IEnumerable<string> RenderBaseCase(string prefix, string prototypeName, char? requiredOrOptional, T value)
+                {
+                    yield return $"{prefix}{prototypeName}{RenderRequiredOrOptional(requiredOrOptional)}{RenderValue(value).Single()}";
+                }
+
+                IEnumerable<string> RenderExtendedCase(string prefix, string prototypeName, char? requiredOrOptional, T value)
+                {
+                    yield return $"{prefix}{prototypeName}";
+                    yield return $"{RenderValue(value).Single()}";
+                }
+
+                yield return RenderBaseCase;
+                yield return RenderExtendedCase;
+            }
+        }
 
         protected virtual IEnumerable<object[]> RenderAllArguments(IEnumerable<string> prototypeNames
             , string prefix, string currentPrototype, char? requiredOrOptional, T value)
