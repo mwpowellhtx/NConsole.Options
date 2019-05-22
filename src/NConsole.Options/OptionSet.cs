@@ -439,6 +439,9 @@ namespace NConsole.Options
                     case IKeyValueActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
                                                       && VerifyIsNeitherBundleNorArgument(1, 2):
 
+                        // TODO: TBD: so we are supporting the boolean +- ...
+                        // TODO: TBD: it might be interesting to support <val/>[+-]
+                        // TODO: TBD: or would we want to support [+-]<val/>, depending on the pair specification?
                         context.OptionValues.Add(args[++currentCount]);
                         context.OptionValues.Add(args[++currentCount]);
                         break;
