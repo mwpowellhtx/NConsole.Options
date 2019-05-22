@@ -268,11 +268,6 @@ namespace NConsole.Options
 
         protected virtual OptionContext CreateOptionContext() => new OptionContext(this);
 
-        // TODO: TBD: the execution on this (baseline?) implementation is REALLY confused, I think.
-        // TODO: TBD: I think it needs to be simplified: 1) stage the argument parts for the desired option(s)
-        // TODO: TBD: 2) deliver said parts to the matching option(s) "on visitation" ...
-        // TODO: TBD: 3) capture any parts that fail to match anything
-
         private Option DefaultOption => Contains(AngleBrackets) ? this[AngleBrackets] : null;
 
         /// <summary>
@@ -301,7 +296,6 @@ namespace NConsole.Options
                         break;
 
                     default:
-                        // TODO: TBD: check this, this is probably correct... or is that ... += (count - 1) ?
                         context.OptionIndex += count + 1;
                         break;
                 }
@@ -323,7 +317,6 @@ namespace NConsole.Options
                     continue;
                 }
 
-                // TODO: TBD: I do not thing this necessarily needs to be a Try...
                 if (!TryDispatchOptionVisit(context, ref parts, args, out count))
                 {
                     args.Take(count + 1).ToList().ForEach(argsNotDispatched.Add);
@@ -422,7 +415,6 @@ namespace NConsole.Options
                         context.OptionValues.Add(args[++currentCount]);
                         break;
 
-                    // TODO: TBD: we will worry about additional 'separator' based key/value cases in a later iteration.
                     case IKeyValueActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue
                                                       && VerifyIsNeitherBundleNorArgument(1):
 
@@ -467,14 +459,6 @@ namespace NConsole.Options
 
                     default:
 
-                        //// ReSharper disable once CommentTypo
-                        //throw new OptionException(
-                        //    Format(Localizer("Invalid `{0}' parameter specification discovered.")
-                        //        , context.OptionName)
-                        //    , context.OptionName
-                        //);
-
-                        // TODO: TBD: throw? or simply continue?
                         // There is nothing to process, so Continue, bypass the Visitation.
                         continue;
                 }
@@ -559,7 +543,6 @@ namespace NConsole.Options
             {
                 bool IsNotNullOrEmpty(string s) => !IsNullOrEmpty(s);
 
-                // TODO: TBD: We may want to preclude circumstances in which we potentially discover both.
                 // We need to Extrapolate the Boolean Flag from either the Name or the Value.
                 char? VerifyBooleanFlag(ref string s)
                 {
@@ -905,19 +888,11 @@ namespace NConsole.Options
 
                         break;
 
-                    case Colon:
-
-                        if (start < 0)
-                        {
-                            // TODO: TBD: huh? a goto? wow...
-                            goto default;
-                        }
-
+                    case Colon when start >= 0:
                         start = i + 1;
                         break;
 
                     default:
-
                         if (start < 0)
                         {
                             sb.Append(description[i]);
