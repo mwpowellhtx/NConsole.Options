@@ -2,7 +2,6 @@
 
 namespace NConsole.Options.Parsing.KeyValue
 {
-    using Targets;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -29,14 +28,21 @@ namespace NConsole.Options.Parsing.KeyValue
             Callback = (k, v) => PairsVisited.Add(KeyValuePair.Create(k, v));
         }
 
-        //#pragma warning disable xUnit1008
-        //        [ClassData(typeof(System.String))]
-        //        public override void Can_Parse_Arguments(string prototype, string description, char requiredOrOptional
-        //            , string[] args,KeyValuePair<TKey, TValue>[] expectedValues, string[] expectedUnprocessedArgs)
-        //        {
-        //            base.Can_Parse_Arguments(prototype, description, requiredOrOptional, args, expectedValues, expectedUnprocessedArgs);
-        //        }
-        //#pragma warning restore xUnit1008
+        protected override OptionSet Add(OptionSet options, string prototype, OptionCallback<TKey, TValue> callback)
+            => options.Add(prototype, callback);
+
+        protected override OptionSet Add(OptionSet options, string prototype, string description, OptionCallback<TKey, TValue> callback)
+            => options.Add(prototype, description, callback);
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<KeyValueActionOption<TKey, TValue>>(o.AssertNotNull(), prototype, expectedType)
+            ).AssertNotNull();
+
+        protected override IEnumerable<Option> VerifyOptions(IEnumerable<Option> options, string prototype, string description, OptionValueType? expectedType)
+            => options.AssertCollection(
+                o => VerifyOption<KeyValueActionOption<TKey, TValue>>(o.AssertNotNull(), prototype, description, expectedType)
+            ).AssertNotNull();
 
 #pragma warning disable xUnit1003
         /// <summary>
