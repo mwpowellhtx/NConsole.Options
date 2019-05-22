@@ -28,6 +28,11 @@
         }
 
         /// <summary>
+        /// Gets whether the Context Has <see cref="Option"/>.
+        /// </summary>
+        internal bool HasOption => Option != null;
+
+        /// <summary>
         /// Gets the Option Name.
         /// </summary>
         public string OptionName { get; internal set; }
