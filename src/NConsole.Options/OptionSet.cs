@@ -283,7 +283,7 @@ namespace NConsole.Options
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public List<string> Parse(params string[] args)
+        public IEnumerable<string> Parse(params string[] args)
         {
             var argsNotDispatched = new List<string>();
 
