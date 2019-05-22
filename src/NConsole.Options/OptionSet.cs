@@ -370,6 +370,10 @@ namespace NConsole.Options
                        && indexes.All(i => !(TryEvaluateBundle(args[i], out _) || TryEvaluateArgument(args[i], out _)));
             }
 
+            // ReSharper disable once IdentifierTypo
+            bool TryUnbundleKeyValuePair(string s, char[] separators, out string[] results)
+                => (results = s.Split(separators)).Length == 2;
+
             // Key is more of a Key at this point than a Name, used to lookup the Option.
             foreach (var (key, option) in parts.Options)
             {
@@ -415,6 +419,14 @@ namespace NConsole.Options
 
                         context.OptionValues.Add(parts.Value);
                         context.OptionValues.Add(args[++currentCount]);
+                        break;
+
+                    case IKeyValueActionOption _ when parts.HasValue
+                                                      && !parts.EnableBoolean.HasValue
+                                                      && TryUnbundleKeyValuePair(parts.Value, context.Option.Separators.ToArray(), out var xy):
+
+                        context.OptionValues.Add(xy[0]);
+                        context.OptionValues.Add(xy[1]);
                         break;
 
                     case IKeyValueActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue
