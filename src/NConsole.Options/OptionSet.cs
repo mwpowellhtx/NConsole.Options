@@ -23,10 +23,15 @@ namespace NConsole.Options
     public class OptionSet : KeyedCollection<string, Option>
     {
         /// <summary>
+        /// Provides a Default Identity <see cref="LocalizationCallback"/>.
+        /// </summary>
+        public static readonly LocalizationCallback DefaultLocalization = s => s;
+
+        /// <summary>
         /// Default Constructor.
         /// </summary>
         /// <inheritdoc />
-        public OptionSet() : this(s => s)
+        public OptionSet() : this(null)
         {
         }
 
@@ -38,7 +43,7 @@ namespace NConsole.Options
         /// <inheritdoc />
         public OptionSet(LocalizationCallback localizer)
         {
-            Localizer = localizer;
+            Localizer = localizer ?? DefaultLocalization;
         }
 
         // ReSharper disable once CommentTypo
