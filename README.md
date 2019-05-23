@@ -1,6 +1,6 @@
 # NConsole.Options
 
-*NConsole.Options* is a command line arguments parser for C#. See [ndesk.org](https://www.ndesk.org/Options) for background reading informing this project.
+*NConsole.Options* is a command line arguments parser for C#. See [ndesk.org](http://www.ndesk.org/Options) for background reading informing this project.
 
 ## Overview
 
