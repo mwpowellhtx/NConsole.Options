@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageProjectUrl>http://github.com/mwpowellhtx/Code.Generator.Roslyn</PackageProjectUrl>
-    <!--<PackageLicense>https://github.com/mwpowellhtx/Code.Generator.Roslyn/blob/master/LICENSE</PackageLicense>-->
-    <PackageLicenseUrl>https://github.com/mwpowellhtx/Code.Generator.Roslyn/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>http://github.com/mwpowellhtx/NConsole.Options</PackageProjectUrl>
+    <!--<PackageLicense>https://github.com/mwpowellhtx/NConsole.Options/blob/master/LICENSE</PackageLicense>-->
+    <PackageLicenseUrl>https://github.com/mwpowellhtx/NConsole.Options/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup>
