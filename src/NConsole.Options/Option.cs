@@ -20,28 +20,28 @@ namespace NConsole.Options
     /// <inheritdoc />
     public abstract class Option : IOption
     {
-        /// <summary>
-        /// Gets the Prototype.
-        /// </summary>
+        internal Guid Id { get; } = Guid.NewGuid();
+
+        /// <inheritdoc />
         public string Prototype { get; }
 
-        /// <summary>
-        /// Gets the Description.
-        /// </summary>
+        /// <inheritdoc />
         public string Description { get; }
 
         private readonly OptionValueType? _valueType;
 
-        /// <summary>
-        /// Gets the ValueType.
-        /// </summary>
+        /// <inheritdoc />
         public OptionValueType? ValueType => _valueType;
 
+        // TODO: TBD: "maximum value count" ? does this really serve any real purpose given the dispatch strategies?
+        // TODO: TBD: ditto the original assumptions... I think it has more to do with the functional spec, "simple", "target", "key/value" and so on.
         private int _maximumValueCount;
 
+        // ReSharper disable once StringLiteralTypo
         /// <summary>
         /// Gets the MaximumValueCount.
         /// </summary>
+        [Obsolete("We are thinking this is potentially a non-sequitur, that the functional specification should drive the `maximum value count'.")]
         public int MaximumValueCount
         {
             get => _maximumValueCount;
@@ -68,7 +68,9 @@ namespace NConsole.Options
                 switch (value)
                 {
                     case 0 when ValueType.HasValue:
-                        throw ThrowMaximumValueCount(Required, Optional);
+                        //// TODO: TBD: on second thought, I think this is probably a sensible allowance.
+                        //throw ThrowMaximumValueCount(Required, Optional);
+                        break;
                     default:
                         if (value > 1 && !ValueType.HasValue)
                         {
@@ -88,20 +90,16 @@ namespace NConsole.Options
         /// </summary>
         private readonly string[] _names;
 
-        /// <summary>
-        /// Gets the Names.
-        /// </summary>
-        internal IReadOnlyList<string> Names => _names;
+        /// <inheritdoc />
+        public IReadOnlyList<string> Names => _names;
 
         /// <summary>
         /// <see cref="Separators"/> readonly backing field.
         /// </summary>
         private readonly char[] _separators;
 
-        /// <summary>
-        /// Gets the Value Separators.
-        /// </summary>
-        internal IReadOnlyList<char> Separators => _separators;
+        /// <inheritdoc />
+        public IReadOnlyList<char> Separators => _separators;
 
         /// <summary>
         /// Protected Constructor.
