@@ -17,7 +17,7 @@ namespace NConsole.Options
         private string OptionName { get; }
 
         /// <inheritdoc />
-        public OptionException()
+        internal OptionException()
         {
         }
 
@@ -27,7 +27,7 @@ namespace NConsole.Options
         /// <param name="message"></param>
         /// <param name="optionName"></param>
         /// <inheritdoc />
-        public OptionException(string message, string optionName)
+        internal OptionException(string message, string optionName)
             : base(message)
         {
             OptionName = optionName;

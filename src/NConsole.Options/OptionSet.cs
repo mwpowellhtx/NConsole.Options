@@ -63,6 +63,9 @@ namespace NConsole.Options
                 throw new ArgumentNullException(nameof(option));
             }
 
+            // TODO: TBD: the risk we run is that we have several keys going on here, and a potential for disconnect between the Keyed and the augmenting Dictionary.
+            // TODO: TBD: i.e. prototypes such as "a|alpha" is potentially a problematic conflict with "b|a|bravo", "c|b|charlie" ...
+            // This is how we engage the First Name in the Option Names.
             if (option.Names != null && option.Names.Any())
             {
                 return option.Names[0];
@@ -116,6 +119,7 @@ namespace NConsole.Options
                 // KeyedCollection.InsertItem/SetItem handle the 0th name.
                 for (var i = 1; i < option.Names.Count; ++i)
                 {
+                    // TODO: TBD: may look at consolidating/simplifying the Dictionary, also the "keyed" collection...
                     Dictionary.Add(option.Names[i], option);
                     added.Add(option.Names[i]);
                 }
@@ -279,15 +283,24 @@ namespace NConsole.Options
         /// Parses the <paramref name="args"/> and returns any that were Not Dispatched
         /// during the operation. Calling this method is the nerve center of starting the
         /// <see cref="Option"/> collection being parsed, doing something with them in the
-        /// scope of your application.
+        /// scope of your application. Throws <see cref="UnprocessedRequiredOptionsException"/>
+        /// when there are Unprocessed <see cref="Required"/> <see cref="IOption"/> instances.
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
+        /// <exception cref="UnprocessedRequiredOptionsException">Thrown when there are
+        /// Unprocessed <see cref="Required"/> <see cref="IOption"/> instances.</exception>
         public IEnumerable<string> Parse(params string[] args)
         {
             var argsNotDispatched = new List<string>();
 
             var context = CreateOptionContext();
+
+            // Start by assuming NO Required Options were processed, which is technically accurate AT THIS MOMENT.
+            var unprocessedRequiredOptions = this.Where(o => o.ValueType == Required).ToDictionary(x => x.Id, x => x);
+
+            // And prepare to Remove the Processed Options by Id.
+            void RemoveProcessedOptionById(Guid processedId) => unprocessedRequiredOptions.Remove(processedId);
 
             for (var count = 0; args.Any(); args = args.Skip(count + 1).ToArray())
             {
@@ -322,13 +335,38 @@ namespace NConsole.Options
                     continue;
                 }
 
-                if (!TryDispatchOptionVisit(context, ref parts, args, out count))
+                if (!TryDispatchOptionVisit(context, ref parts, args, out count, out var processed))
                 {
                     args.Take(count + 1).ToList().ForEach(argsNotDispatched.Add);
                 }
+                else
+                {
+                    // ReSharper disable once PossibleMultipleEnumeration
+                    processed.Where(x => unprocessedRequiredOptions.ContainsKey(x.Id))
+                        .Select(x => x.Id).ToList().ForEach(RemoveProcessedOptionById);
+                }
             }
 
-            return argsNotDispatched;
+            // Simply Return when there were not any Unprocessed Required Options.
+            if (!unprocessedRequiredOptions.Any())
+            {
+                return argsNotDispatched;
+            }
+
+            // More precisely, THROW when there WERE Unprocessed Required Options.
+            var requiredOptionTotalCount = this.Count(x => x.IsRequired());
+            var unprocessedOptions = unprocessedRequiredOptions.Values.ToArray<IOption>();
+            var message = $"{unprocessedOptions.Length} of {requiredOptionTotalCount}"
+                          + $" {nameof(Required)} {nameof(Option)}(s) were not processed.";
+            throw new UnprocessedRequiredOptionsException(message, unprocessedOptions)
+            {
+                Data =
+                {
+                    {nameof(requiredOptionTotalCount), requiredOptionTotalCount},
+                    {nameof(unprocessedOptions) + "Count", unprocessedOptions.Length},
+                    {nameof(unprocessedOptions), unprocessedOptions}
+                }
+            };
         }
 
         /// <summary>
@@ -356,13 +394,15 @@ namespace NConsole.Options
         /// One based Arguments.</param>
         /// <param name="count">Report the Count of the number of Arguments actually consumed
         /// by this Dispatch invocation, not including the Current argument.</param>
+        /// <param name="processed">Captures all of the Processed Options.</param>
         /// <returns></returns>
         private bool TryDispatchOptionVisit(OptionContext context, ref ArgumentEvaluationResult parts
-            , IReadOnlyList<string> args, out int count)
+            , IReadOnlyList<string> args, out int count, out IEnumerable<Option> processed)
         {
-            var dispatched = 0;
-
             count = 0;
+
+            // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
+            var processedOptions = new Dictionary<Guid, Option> { };
 
             // ReSharper disable once RedundantAssignment
             bool IsBooleanType(Type targetType) => BooleanTypes.Any(t => targetType == t);
@@ -471,13 +511,14 @@ namespace NConsole.Options
                 // Which culminates in an Option Visit.
                 context.Visit();
 
+                // Relay the Processed Options via the Context driven view.
+                processedOptions[context.Option.Id] = context.Option;
+
                 // Pull the Maximum Count forward to be reconciled by the Caller.
                 count = Max(count, currentCount);
-
-                ++dispatched;
             }
 
-            return dispatched > 0;
+            return (processed = processedOptions.Values.ToArray()).Any();
         }
 
         private struct ArgumentEvaluationResult
@@ -767,6 +808,7 @@ namespace NConsole.Options
                         Write(writer, ref written, Localizer($"{SquareBracketOpen}"));
                     }
 
+                    // TODO: TBD: revisit the need for MaximumValueCount, I think this is a weak reason for it...
                     Write(writer, ref written
                         , Localizer($"{Equal}{GetArgumentName(0, option.MaximumValueCount, option.Description)}"));
 

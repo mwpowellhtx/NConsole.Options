@@ -30,6 +30,7 @@ namespace NConsole.Options.Registration.Simple
                 o => VerifyOption<SimpleActionOption>(o, prototype, description, expectedType)
             );
 
+        // TODO: TBD: I know what we were driving at with the `Register' approach, however, I think it needs to be revisited just a bit...
         /// <summary>
         /// Registration serves to verify Option Registration as well as Argument Parsing.
         /// </summary>
