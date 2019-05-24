@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace NConsole.Options.Parsing.Simple
@@ -12,9 +13,6 @@ namespace NConsole.Options.Parsing.Simple
         // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
         protected ICollection<bool> OptionsVisited { get; } = new List<bool> { };
 
-        private void VerifyOptionsVisited(IEnumerable<bool> expected, IEnumerable<bool> actual)
-            => actual.AssertNotNull().AssertEqual(expected.AssertNotNull());
-
         protected SimpleArgumentParsingTestFixtureBase(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
@@ -23,6 +21,8 @@ namespace NConsole.Options.Parsing.Simple
 #pragma warning disable xUnit1003
         /// <summary>
         /// Verifies that the <see cref="OptionSet"/> Can Parse the <paramref name="args"/>.
+        /// This also has the desirable side effect of verify when
+        /// <see cref="UnprocessedRequiredOptionsException"/> is not thrown.
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
@@ -36,6 +36,8 @@ namespace NConsole.Options.Parsing.Simple
         )
         {
             OptionsVisited.AssertNotNull();
+
+            Callback = () => OptionsVisited.Add(true);
 
             // The Option Registration verifies Prototype, Description, etc.
             args.AssertNotNull().AssertNotEmpty();
@@ -53,6 +55,55 @@ namespace NConsole.Options.Parsing.Simple
 
             VerifyParsingResults(Register(prototype));
             VerifyParsingResults(Register(prototype, description));
+        }
+#pragma warning restore xUnit1003
+
+#pragma warning disable xUnit1003
+        /// <summary>
+        /// Verifies whether <see cref="OptionSet"/> Did Throw On Unprocessed <see cref="Option"/>
+        /// instances. There is no need to rinse and repeat this expectation for Targeted, nor for
+        /// Key Value Paired argument parsing, as this level of thrown <see cref="Exception"/> is
+        /// consistent regardless of the number of expected <see cref="Option"/> Parameters.
+        /// </summary>
+        /// <param name="prototypes"></param>
+        /// <param name="args"></param>
+        /// <param name="unprocessedPrototypes"></param>
+        [Theory]
+        public virtual void Did_Throw_On_Unprocessed_Options(string[] prototypes
+            , string[] args, string[] unprocessedPrototypes)
+        {
+            prototypes.AssertNotNull().AssertNotEmpty();
+            args.AssertNotNull();
+
+            Callback = () => { };
+
+            Action verify = () =>
+            {
+                // TODO: TBD: perhaps we also adapt the Registration method for this purposes...
+                var options = new OptionSet {{prototypes[0], Callback}}.AssertNotNull().AssertNotEmpty();
+
+                // TODO: TBD: potentially informs a recasting of the OptionSet registration approach...
+                options.Count.AssertEqual(1);
+
+                // We do not care what the Callback are, per se, in this case.
+                for (var i = 1; i < prototypes.Length; ++i)
+                {
+                    options.Add(prototypes[i], Callback).Count.AssertEqual(i + 1);
+                }
+
+                options.Parse(args);
+            };
+
+            verify.AssertThrowsException<UnprocessedRequiredOptionsException>(ex =>
+            {
+                var unprocessedOptions = ex.AssertNotNull().UnprocessedOptions.AssertNotNull();
+
+                unprocessedOptions.Count.AssertEqual(unprocessedPrototypes.Length);
+
+                unprocessedOptions.OrderBy(x => x.Prototype)
+                    .Select(x => x.Prototype).Zip(unprocessedPrototypes.OrderBy(y => y)
+                        , (x, y) => x == y).ToList().ForEach(Assert.True);
+            });
         }
 #pragma warning restore xUnit1003
 
