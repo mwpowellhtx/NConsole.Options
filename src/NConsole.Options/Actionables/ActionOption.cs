@@ -7,10 +7,15 @@
     /// <inheritdoc cref="ActionOptionBase{TTarget}"/>
     internal sealed class ActionOption<TTarget> : ActionOptionBase<TTarget>, IActionOption
     {
-        // TODO: TBD: Public? or Internal?
+        /// <summary>
+        /// Gets the MaximumParameterCount, 1.
+        /// </summary>
         /// <inheritdoc />
-        public ActionOption(string prototype, string description, OptionCallback<TTarget> callback)
-            : base(prototype, description, 1, callback)
+        internal override int MaximumParameterCount { get; } = 1;
+
+        /// <inheritdoc />
+        internal ActionOption(string prototype, string description, OptionCallback<TTarget> callback)
+            : base(prototype, description, callback)
         {
         }
     }

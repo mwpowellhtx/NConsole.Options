@@ -20,6 +20,11 @@ namespace NConsole.Options
     /// <inheritdoc />
     public abstract class Option : IOption
     {
+        /// <summary>
+        /// Gets whether the Option ShouldReport during the Written Report.
+        /// </summary>
+        internal virtual bool ShouldReport { get; } = true;
+
         internal Guid Id { get; } = Guid.NewGuid();
 
         /// <inheritdoc />
@@ -33,55 +38,36 @@ namespace NConsole.Options
         /// <inheritdoc />
         public OptionValueType? ValueType => _valueType;
 
-        // TODO: TBD: "maximum value count" ? does this really serve any real purpose given the dispatch strategies?
-        // TODO: TBD: ditto the original assumptions... I think it has more to do with the functional spec, "simple", "target", "key/value" and so on.
-        private int _maximumValueCount;
-
-        // ReSharper disable once StringLiteralTypo
+        // TODO: TBD: this is really here to inform the OptionSet rendering to "written" help text...
+        // TODO: TBD: however, I think it is worth considering each Option is responsible for rendering itself.
+        // TODO: TBD: with perhaps an OptionSet summary view...
         /// <summary>
-        /// Gets the MaximumValueCount.
+        /// Gets the MaximumParameterCount.
         /// </summary>
-        [Obsolete("We are thinking this is potentially a non-sequitur, that the functional specification should drive the `maximum value count'.")]
-        public int MaximumValueCount
+        internal abstract int MaximumParameterCount { get; }
+
+        private void VerifyMaximumParameterCount()
         {
-            get => _maximumValueCount;
-            private set
+            var count = MaximumParameterCount;
+
+            if (count <= 1 || ValueType.HasValue)
             {
-                if (value < 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-
-                ArgumentException ThrowMaximumValueCount(params OptionValueType[] traits)
-                {
-                    var traitPrefix = $"{nameof(OptionValueType)}";
-
-                    string EnumeratedTraits() => traits.Any()
-                        ? Join($" {or} ", traits.Select(x => $"`{traitPrefix}{Dot}{x}'"))
-                        : "[No Traits Specified]";
-
-                    return new ArgumentException(
-                        $"Cannot provide `{nameof(value)}' of {value} for {EnumeratedTraits()}."
-                        , nameof(value));
-                }
-
-                switch (value)
-                {
-                    case 0 when ValueType.HasValue:
-                        //// TODO: TBD: on second thought, I think this is probably a sensible allowance.
-                        //throw ThrowMaximumValueCount(Required, Optional);
-                        break;
-                    default:
-                        if (value > 1 && !ValueType.HasValue)
-                        {
-                            throw ThrowMaximumValueCount();
-                        }
-
-                        break;
-                }
-
-                _maximumValueCount = value;
+                return;
             }
+
+            string RenderValueTypes(params OptionValueType[] values) => Join(" or ", values.Select(x => $"{x}"));
+
+            throw new InvalidOperationException(
+                $"Invalid {nameof(ValueType)} with {nameof(MaximumParameterCount)} of {count}"
+                + $", expecting {RenderValueTypes(Optional, Required)}."
+            )
+            {
+                Data =
+                {
+                    {nameof(MaximumParameterCount), MaximumParameterCount},
+                    {nameof(ValueType), ValueType}
+                }
+            };
         }
 
         // ReSharper disable once RedundantEmptyObjectOrCollectionInitializer
@@ -106,33 +92,42 @@ namespace NConsole.Options
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
-        /// <inheritdoc />
         protected Option(string prototype, string description)
-            : this(prototype, description, 1)
-        {
-        }
-
-        /// <summary>
-        /// Protected Constructor.
-        /// </summary>
-        /// <param name="prototype"></param>
-        /// <param name="description"></param>
-        /// <param name="maximumValueCount"></param>
-        protected Option(string prototype, string description, int maximumValueCount)
         {
             Description = description;
 
             ParsePrototype(Prototype = prototype, out _names, out _valueType, out _separators);
 
-            MaximumValueCount = maximumValueCount;
+            VerifyDefaultOptionCase(prototype);
 
-            if (Names.Any(x => x == AngleBrackets)
-                && ((Names.Count == 1 && !ValueType.HasValue)
-                    || (Names.Count > 1 && MaximumValueCount > 1)))
+            VerifyMaximumParameterCount();
+        }
+
+        // ReSharper disable once UnusedParameter.Local
+        private void VerifyDefaultOptionCase(string prototype)
+        {
+            if (Names.All(x => x != AngleBrackets))
             {
-                throw new ArgumentException(
-                    $"The default option handler '{AngleBrackets}' cannot require values."
+                return;
+            }
+
+            ArgumentException ThrownPrototypeRequirementException()
+                => new ArgumentException(
+                    $"The default option handler '{AngleBrackets}' cannot require parameters of any kind."
                     , nameof(prototype));
+
+            switch (Names.Count)
+            {
+                case 1 when ValueType == Required:
+                    throw ThrownPrototypeRequirementException();
+
+                default:
+                    if (MaximumParameterCount >= 1)
+                    {
+                        throw ThrownPrototypeRequirementException();
+                    }
+
+                    break;
             }
         }
 
@@ -161,8 +156,12 @@ namespace NConsole.Options
         }
         // ReSharper restore InconsistentNaming
 
+        /// <summary>
+        /// Regular Expression providing allowance for Names that include the Default Case.
+        /// </summary>
+        /// <see cref="AngleBrackets"/>
         private Regex PrototypeRegex { get; } = new Regex(
-            @"^(?<prev>(([A-Za-z]([\w-]|[^:=])*)[|])*)(?<last>([A-Za-z]([\w-]|[^:=])*))(?<roo>[:=])?(({(?<sep>[^\w-]+)})|(?<sep>[^\w-]+))?$"
+            @"^(?<prev>((<>|([A-Za-z]([\w-]|[^:=])*))[|])*)(?<last>(<>|([A-Za-z]([\w-]|[^:=])*)))(?<roo>[:=])?(({(?<sep>[^\w-]+)})|(?<sep>[^\w-]+))?$"
             , Compiled);
 
         private void ParsePrototype(string prototype, out string[] names, out OptionValueType? parsedType, out char[] separators)

@@ -12,17 +12,16 @@
         /// </summary>
         /// <param name="prototype"></param>
         /// <param name="description"></param>
-        /// <param name="count"></param>
         /// <param name="callback"></param>
         /// <inheritdoc />
-        protected ActionOptionBase(string prototype, string description, int count, OptionCallback<TTarget> callback)
-            : base(prototype, description, count, callback)
+        protected ActionOptionBase(string prototype, string description, OptionCallback<TTarget> callback)
+            : base(prototype, description, callback)
         {
         }
 
         /// <inheritdoc />
         protected override void OnVisitation(OptionContext context) => Callback.Invoke(
-            Parse<TTarget>(context.OptionValues[0], context)
+            Parse<TTarget>(context.Parameters[0], context)
         );
     }
 }

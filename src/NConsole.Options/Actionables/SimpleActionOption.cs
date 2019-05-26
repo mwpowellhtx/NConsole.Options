@@ -6,9 +6,14 @@
     /// <inheritdoc cref="InvokableActionOption{TCallback}"/>
     internal sealed class SimpleActionOption : InvokableActionOption<OptionCallback>, ISimpleActionOption
     {
+        /// <summary>
+        /// Gets the MaximumParameterCount, 0.
+        /// </summary>
+        internal override int MaximumParameterCount { get; } = 0;
+
         // TODO: TBD: public? or internal?
         /// <inheritdoc />
-        public SimpleActionOption(string prototype, string description, OptionCallback callback)
+        internal SimpleActionOption(string prototype, string description, OptionCallback callback)
             : base(prototype, description, callback)
         {
         }

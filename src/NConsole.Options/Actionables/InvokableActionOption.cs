@@ -11,13 +11,15 @@ namespace NConsole.Options
         /// </summary>
         protected TCallback Callback { get; }
 
+        /// <summary>
+        /// Protected Constructor.
+        /// </summary>
+        /// <param name="prototype"></param>
+        /// <param name="description"></param>
+        /// <param name="callback"></param>
+        /// <inheritdoc />
         protected InvokableActionOption(string prototype, string description, TCallback callback)
-            : this(prototype, description, 0, callback)
-        {
-        }
-
-        protected InvokableActionOption(string prototype, string description, int count, TCallback callback)
-            : base(prototype, description, count)
+            : base(prototype, description)
         {
             Callback = callback ?? throw new ArgumentNullException(nameof(callback));
         }
