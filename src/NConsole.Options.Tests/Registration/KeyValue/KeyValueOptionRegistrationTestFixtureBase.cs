@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace NConsole.Options.Registration.KeyValue
@@ -117,16 +118,20 @@ namespace NConsole.Options.Registration.KeyValue
                 return;
             }
 
-            void VerifyException(ArgumentException ex)
+            void VerifyException(InvalidOperationException ex)
             {
-                OutputHelper.WriteLine($"{ex.ParamName}: {ex.Message}");
-                const string value = nameof(value);
+                string RenderKeyedData(string key) => $"{key}=`{(ex.Data[key] == null ? "null" : $"{ex.Data[key]}")}'";
+
+                string RenderMaximumParameterCountData() => RenderKeyedData(nameof(Option.MaximumParameterCount));
+                string RenderValueTypeData() => RenderKeyedData(nameof(Option.ValueType));
+
+                OutputHelper.WriteLine($"{ex.Message} ({RenderMaximumParameterCountData()}, {RenderValueTypeData()})");
+
                 ex.AssertNotNull();
-                ex.ParamName.AssertEqual(value);
             }
 
-            RegisterAction().AssertThrowsException<ArgumentException>(VerifyException);
-            RegisterWithDescriptionAction().AssertThrowsException<ArgumentException>(VerifyException);
+            RegisterAction().AssertThrowsException<InvalidOperationException>(VerifyException);
+            RegisterWithDescriptionAction().AssertThrowsException<InvalidOperationException>(VerifyException);
         }
     }
 }
