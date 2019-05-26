@@ -9,10 +9,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Provides command line argument parsing.</Description>
-    <Version>1.0.2.31589</Version>
-    <AssemblyVersion>1.0.2.31589</AssemblyVersion>
-    <FileVersion>1.0.2.31589</FileVersion>
-    <PackageVersion>1.0.2.31589</PackageVersion>
+    <Version>1.0.3.11148</Version>
+    <AssemblyVersion>1.0.3.11148</AssemblyVersion>
+    <FileVersion>1.0.3.11148</FileVersion>
+    <PackageVersion>1.0.3.11148</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)'=='AnyCPU'">
