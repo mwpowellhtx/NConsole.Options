@@ -277,7 +277,7 @@ namespace NConsole.Options
 
         protected virtual OptionContext CreateOptionContext() => new OptionContext(this);
 
-        private Option DefaultOption => Contains(AngleBrackets) ? this[AngleBrackets] : null;
+        private Option GetDefaultOption() => Contains(AngleBrackets) ? this[AngleBrackets] : DefaultOption.Instance;
 
         /// <summary>
         /// Parses the <paramref name="args"/> and returns any that were Not Dispatched
@@ -378,7 +378,7 @@ namespace NConsole.Options
         /// Visits a fleshed out <paramref name="context"/> upon each of the selected the
         /// <see cref="ArgumentEvaluationResult.Options"/>, rounding out elements such as
         /// <see cref="OptionContext.Option"/> itself, <see cref="OptionContext.OptionName"/>,
-        /// and any <see cref="OptionContext.OptionValues"/> that may be required. We will expect
+        /// and any <see cref="OptionContext.Parameters"/> that may be required. We will expect
         /// that <see cref="OptionContext.OptionIndex"/> will have been designated by virtual of
         /// the calling Arguments loop.
         /// </summary>
@@ -432,7 +432,7 @@ namespace NConsole.Options
 
                 context.Option = option;
                 context.OptionName = $"{parts.Flag}{key}";
-                context.OptionValues.Clear();
+                context.Parameters.Clear();
 
                 /* TODO: TBD: the dispatch heuristics are a more relax here, just simply because each
                  * individual Option may require a different set of parameters, but we still want to
@@ -447,24 +447,24 @@ namespace NConsole.Options
                         break;
 
                     case IActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue:
-                        context.OptionValues.Add(parts.Value);
+                        context.Parameters.Add(parts.Value);
                         break;
 
                     case IActionOption _ when parts.EnableBoolean.HasValue && !parts.HasValue:
-                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        context.Parameters.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         break;
 
                     case IActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
                                               && VerifyIsNeitherBundleNorArgument(1):
 
-                        context.OptionValues.Add(args[++currentCount]);
+                        context.Parameters.Add(args[++currentCount]);
                         break;
 
                     case IKeyValueActionOption _ when parts.HasValue && !parts.EnableBoolean.HasValue
                                                       && VerifyIsNeitherBundleNorArgument(1):
 
-                        context.OptionValues.Add(parts.Value);
-                        context.OptionValues.Add(args[++currentCount]);
+                        context.Parameters.Add(parts.Value);
+                        context.Parameters.Add(args[++currentCount]);
                         break;
 
                     case IKeyValueActionOption _ when parts.HasValue
@@ -472,8 +472,8 @@ namespace NConsole.Options
                                                       && context.HasOption
                                                       && TryUnbundleKeyValuePair(parts.Value, context.Option?.Separators?.ToArray(), out var xy):
 
-                        context.OptionValues.Add(xy[0]);
-                        context.OptionValues.Add(xy[1]);
+                        context.Parameters.Add(xy[0]);
+                        context.Parameters.Add(xy[1]);
                         break;
 
                     // Always assume the Boolean Shorthand is the Value member of the Key Value Pair.
@@ -481,8 +481,8 @@ namespace NConsole.Options
                                                       && parts.EnableBoolean.HasValue
                                                       && o.TryVerifyKeyValueActionOptionTypes(valueTypeCallback: IsBooleanType):
 
-                        context.OptionValues.Add(parts.Value);
-                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        context.Parameters.Add(parts.Value);
+                        context.Parameters.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         break;
 
                     // After handling the specific leading edge use case, then we may significantly reduce subsequent case load.
@@ -491,25 +491,26 @@ namespace NConsole.Options
                                                       && o.TryVerifyKeyValueActionOptionTypes(IsNotBooleanType, IsBooleanType)
                                                       && VerifyIsNeitherBundleNorArgument(1):
 
-                        context.OptionValues.Add(args[++currentCount]);
-                        context.OptionValues.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
+                        context.Parameters.Add(args[++currentCount]);
+                        context.Parameters.Add(RenderEnableBoolean(parts.EnableBoolean.Value));
                         break;
 
                     case IKeyValueActionOption _ when !(parts.HasValue || parts.EnableBoolean.HasValue)
                                                       && VerifyIsNeitherBundleNorArgument(1, 2):
 
-                        context.OptionValues.Add(args[++currentCount]);
-                        context.OptionValues.Add(args[++currentCount]);
+                        context.Parameters.Add(args[++currentCount]);
+                        context.Parameters.Add(args[++currentCount]);
                         break;
-
-                    default:
-
-                        // There is nothing to process, so Continue, bypass the Visitation.
-                        continue;
                 }
 
                 // Which culminates in an Option Visit.
                 context.Visit();
+
+                // There is nothing further to Report when we encounter the Default Option.
+                if (context.Option is IDefaultOption)
+                {
+                    continue;
+                }
 
                 // Relay the Processed Options via the Context driven view.
                 processedOptions[context.Option.Id] = context.Option;
@@ -723,7 +724,7 @@ namespace NConsole.Options
             // Remember, here we are evaluating the COMMAND LINE ARGUMENT itself.
             result.Options.Add(Tuple.Create(
                 result.Name
-                , Contains(result.Name) ? this[result.Name] : DefaultOption
+                , Contains(result.Name) ? this[result.Name] : GetDefaultOption()
             ));
 
             return true;
@@ -810,14 +811,14 @@ namespace NConsole.Options
 
                     // TODO: TBD: revisit the need for MaximumValueCount, I think this is a weak reason for it...
                     Write(writer, ref written
-                        , Localizer($"{Equal}{GetArgumentName(0, option.MaximumValueCount, option.Description)}"));
+                        , Localizer($"{Equal}{GetArgumentName(0, option.MaximumParameterCount, option.Description)}"));
 
                     var sep = option.Separators.Any() ? $"{option.Separators.First()}" : " ";
 
-                    for (var c = 1; c < option.MaximumValueCount; ++c)
+                    for (var c = 1; c < option.MaximumParameterCount; ++c)
                     {
                         Write(writer, ref written,
-                            Localizer($"{sep}{GetArgumentName(c, option.MaximumValueCount, option.Description)}")
+                            Localizer($"{sep}{GetArgumentName(c, option.MaximumParameterCount, option.Description)}")
                         );
                     }
 

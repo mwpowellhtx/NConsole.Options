@@ -3,9 +3,9 @@
     public class OptionContext
     {
         /// <summary>
-        /// Gets the OptionValues.
+        /// Gets the Parameters.
         /// </summary>
-        public OptionValueCollection OptionValues { get; }
+        internal OptionParameterCollection Parameters { get; }
 
         private Option _option;
 
@@ -20,7 +20,7 @@
                 if (value == null || !ReferenceEquals(value, _option))
                 {
                     OptionName = null;
-                    OptionValues.Clear();
+                    Parameters.Clear();
                 }
 
                 _option = value;
@@ -56,12 +56,14 @@
         internal OptionContext(OptionSet optionSet)
         {
             Set = optionSet;
-            OptionValues = new OptionValueCollection(this);
+            Parameters = new OptionParameterCollection(this);
         }
 
         /// <summary>
         /// Visits the <see cref="Option"/> given itself.
         /// </summary>
-        internal void Visit() => Option?.Visit(this);
+        /// <remarks><see cref="Option"/> should never be Null by this point. We guard against
+        /// that ever being the case during the Argument Parsing Option Dispatch.</remarks>
+        internal void Visit() => Option.Visit(this);
     }
 }

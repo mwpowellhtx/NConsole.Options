@@ -8,7 +8,7 @@ namespace NConsole.Options
     using static Characters;
     using static String;
 
-    public class OptionValueCollection : IList, IList<string>
+    public class OptionParameterCollection : IList, IList<string>
     {
         /// <summary>
         /// Gets the Values used within the Collection.
@@ -20,7 +20,7 @@ namespace NConsole.Options
         /// </summary>
         private OptionContext Context { get; }
 
-        internal OptionValueCollection(OptionContext context)
+        internal OptionParameterCollection(OptionContext context)
         {
             Context = context;
         }
@@ -198,7 +198,7 @@ namespace NConsole.Options
             // ReSharper disable once InvertIf
             if (index.HasValue)
             {
-                if (index >= option.MaximumValueCount)
+                if (index >= option.MaximumParameterCount)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
@@ -209,7 +209,6 @@ namespace NConsole.Options
                             Context.Set.Localizer("Missing required value for option `{0}'.")
                             , Context.OptionName)
                         , Context.OptionName);
-
                 }
             }
 
