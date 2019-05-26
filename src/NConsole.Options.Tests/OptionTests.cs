@@ -32,24 +32,17 @@ namespace NConsole.Options
         {
             const string prototype = nameof(prototype);
             const string description = nameof(description);
-            const string maximumValueCount = nameof(maximumValueCount);
 
             // IL Family is the reflection of C# Protected
             var ctors = FixtureType.GetConstructors(NonPublic | Instance);
 
-            Assert.Collection(ctors.Select(ctor => ctor.IsFamily), Assert.True, Assert.True);
+            Assert.Collection(ctors.Select(ctor => ctor.IsFamily), Assert.True);
 
             Assert.Collection(ctors
                 , ctor => VerifyParameters(
                     ctor.GetParameters()
                     , p => VerifyParameter<string>(p, prototype)
                     , p => VerifyParameter<string>(p, description)
-                )
-                , ctor => VerifyParameters(
-                    ctor.GetParameters()
-                    , p => VerifyParameter<string>(p, prototype)
-                    , p => VerifyParameter<string>(p, description)
-                    , p => VerifyParameter<int>(p, maximumValueCount)
                 )
             );
         }
