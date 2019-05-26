@@ -74,7 +74,7 @@ namespace NConsole.Options
 
         protected static OptionContext VerifyOptionContext(OptionContext context, Option option
             , string prototype, int? optionIndex, Action<OptionContext> verify = null
-            , Action<OptionSet> verifySet = null, Action<OptionValueCollection> verifyCollection = null)
+            , Action<OptionSet> verifySet = null, Action<OptionParameterCollection> verifyCollection = null)
         {
             Action<object> GetNullOrNotNull()
             {
@@ -101,7 +101,7 @@ namespace NConsole.Options
 
             verify?.Invoke(context);
             verifySet?.Invoke(context?.Set);
-            verifyCollection?.Invoke(context?.OptionValues);
+            verifyCollection?.Invoke(context?.Parameters);
 
             return context;
         }

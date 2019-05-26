@@ -10,9 +10,9 @@ namespace NConsole.Options
     using Xunit.Abstractions;
     using static BindingFlags;
 
-    public class OptionValueCollectionTests : TestFixtureBase<OptionValueCollection>
+    public class OptionParameterCollectionTests : TestFixtureBase<OptionParameterCollection>
     {
-        public OptionValueCollectionTests(ITestOutputHelper outputHelper)
+        public OptionParameterCollectionTests(ITestOutputHelper outputHelper)
             : base(outputHelper)
         {
         }
