@@ -1,23 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.572
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NConsole.Options", "NConsole.Options\NConsole.Options.csproj", "{D4AA55D3-11EE-4487-AE02-90275C7DE836}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{FAE220D8-CDAA-4976-8BD5-D8F6B5AA29FD}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{C9414D97-6D88-4A42-BF49-F8E8D794B0B0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".sln", ".sln", "{C9414D97-6D88-4A42-BF49-F8E8D794B0B0}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
-		..\LICENSE = ..\LICENSE
 		NuGet.Config = NuGet.Config
+		Unit.Testing.props = Unit.Testing.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".parent", ".parent", "{4F60633F-D0D2-42BA-B8A4-3582310AD719}"
+	ProjectSection(SolutionItems) = preProject
+		..\LICENSE = ..\LICENSE
+		..\Licensing.props = ..\Licensing.props
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B08BB80E-2D83-473D-9A82-C24CD2626C4B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FAE220D8-CDAA-4976-8BD5-D8F6B5AA29FD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NConsole.Options.Tests", "NConsole.Options.Tests\NConsole.Options.Tests.csproj", "{309B4268-DF61-42BE-9517-ACC656DA47EE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B08BB80E-2D83-473D-9A82-C24CD2626C4B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NConsole.Options", "NConsole.Options\NConsole.Options.csproj", "{D4AA55D3-11EE-4487-AE02-90275C7DE836}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.NConsole.Options", "Test.NConsole.Options\Test.NConsole.Options.csproj", "{309B4268-DF61-42BE-9517-ACC656DA47EE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".tools", ".tools", "{0C979401-CEB4-40F8-B290-0886D669C834}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet", "NuGet", "{465AEAC2-723C-4804-BB41-3F8EACE2A148}"
+	ProjectSection(SolutionItems) = preProject
+		tools\NuGet\publish.cmd = tools\NuGet\publish.cmd
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,8 +50,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{4F60633F-D0D2-42BA-B8A4-3582310AD719} = {C9414D97-6D88-4A42-BF49-F8E8D794B0B0}
 		{D4AA55D3-11EE-4487-AE02-90275C7DE836} = {FAE220D8-CDAA-4976-8BD5-D8F6B5AA29FD}
 		{309B4268-DF61-42BE-9517-ACC656DA47EE} = {B08BB80E-2D83-473D-9A82-C24CD2626C4B}
+		{465AEAC2-723C-4804-BB41-3F8EACE2A148} = {0C979401-CEB4-40F8-B290-0886D669C834}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A4367B2D-14C1-404F-980D-893DAC0A916A}
