@@ -1,49 +1,56 @@
 <Project>
 
-  <PropertyGroup>
-    <Authors>Michael W. Powell</Authors>
-    <Company>Kingdom Software</Company>
-    <Product>NConsole.Options</Product>
-    <Copyright>Copyright (c) 2019</Copyright>
-    <LangVersion>7.3</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Authors>Michael W. Powell</Authors>
+        <RootNamespace>NConsole.Options</RootNamespace>
+        <Company>Ellumination Technologies</Company>
+        <Product>NConsole.Options</Product>
+        <Copyright>Copyright (c) 2019-2020</Copyright>
+        <LangVersion>7.3</LangVersion>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Platform)'=='AnyCPU'">
-    <WarningLevel>2</WarningLevel>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)' == 'AnyCPU'">
+        <WarningLevel>2</WarningLevel>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <PackageProjectUrl>http://github.com/mwpowellhtx/NConsole.Options</PackageProjectUrl>
-    <!--<PackageLicense>https://github.com/mwpowellhtx/NConsole.Options/blob/master/LICENSE</PackageLicense>-->
-    <PackageLicenseUrl>https://github.com/mwpowellhtx/NConsole.Options/blob/master/LICENSE</PackageLicenseUrl>
-  </PropertyGroup>
+    <PropertyGroup>
+        <PackageProjectUrl>https://github.com/mwpowellhtx/NConsole.Options</PackageProjectUrl>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <RootNamespace>NConsole.Options</RootNamespace>
-    <XunitVersion>2.4.1</XunitVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <BumpAssemblyVersionsVersion>1.4.0</BumpAssemblyVersionsVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BumpAssemblyVersions" Version="1.2.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="BumpAssemblyVersions" Version="$(BumpAssemblyVersionsVersion)">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup Condition="Exists('..\packages\BumpAssemblyVersions\1.2.0\build\BumpAssemblyVersions.targets')">
-    <BumpVersionSpec Include="Version" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" Condition="'$(Configuration)' == 'Release'" />
-    <BumpVersionSpec Include="AssemblyVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" Condition="'$(Configuration)' == 'Release'" />
-    <BumpVersionSpec Include="FileVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" Condition="'$(Configuration)' == 'Release'" />
-    <BumpVersionSpec Include="PackageVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup Condition="'$(Configuration)' == 'Release' And '$(BumpWhichVersionField)' == 'Minor' And Exists('..\packages\BumpAssemblyVersions\$(BumpAssemblyVersionsVersion)\build\BumpAssemblyVersions.targets')">
+        <BumpVersionSpec Include="Version" MinorProviderTemplate="Increment" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="AssemblyVersion" MinorProviderTemplate="Increment" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="FileVersion" MinorProviderTemplate="Increment" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="PackageVersion" MinorProviderTemplate="Increment" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+    </ItemGroup>
 
-    <BumpVersionSpec Include="Version" BuildProviderTemplate="Increment" Condition="'$(Configuration)' == 'Debug'" />
-    <BumpVersionSpec Include="AssemblyVersion" BuildProviderTemplate="Increment" Condition="'$(Configuration)' == 'Debug'" />
-    <BumpVersionSpec Include="FileVersion" BuildProviderTemplate="Increment" Condition="'$(Configuration)' == 'Debug'" />
-    <BumpVersionSpec Include="PackageVersion" BuildProviderTemplate="Increment" Condition="'$(Configuration)' == 'Debug'" />
-  </ItemGroup>
+    <ItemGroup Condition="'$(Configuration)' == 'Release' And ('$(BumpWhichVersionField)' == 'Patch' Or '$(BumpWhichVersionField)' == '') And Exists('..\packages\BumpAssemblyVersions\$(BumpAssemblyVersionsVersion)\build\BumpAssemblyVersions.targets')">
+        <BumpVersionSpec Include="Version" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="AssemblyVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="FileVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+        <BumpVersionSpec Include="PackageVersion" PatchProviderTemplate="Increment" BuildProviderTemplate="SecondsSinceMidnight" />
+    </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="if exist &quot;$(ProjectDir)bin\$(Configuration)\*.nupkg&quot; del /f &quot;$(ProjectDir)bin\$(Configuration)\*.nupkg&quot;" />
-  </Target>
+    <ItemGroup Condition="'$(Configuration)' == 'Debug' And Exists('..\packages\BumpAssemblyVersions\$(BumpAssemblyVersionsVersion)\build\BumpAssemblyVersions.targets')">
+        <BumpVersionSpec Include="Version" BuildProviderTemplate="Increment" />
+        <BumpVersionSpec Include="AssemblyVersion" BuildProviderTemplate="Increment" />
+        <BumpVersionSpec Include="FileVersion" BuildProviderTemplate="Increment" />
+        <BumpVersionSpec Include="PackageVersion" BuildProviderTemplate="Increment" />
+    </ItemGroup>
+
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+        <Exec Command="if exist &quot;$(ProjectDir)bin\$(Configuration)\*.nupkg&quot; del /f &quot;$(ProjectDir)bin\$(Configuration)\*.nupkg&quot;" />
+    </Target>
 
 </Project>
