@@ -46,6 +46,18 @@ if "%1" == "--nuget" (
     goto :next_arg
 )
 
+:set_drive_letter
+if "%1" == "--drive" (
+    set xcopy_destination_drive=%2
+    shift
+    goto :next_arg
+)
+if "%1" == "--drive-letter" (
+    set xcopy_destination_drive=%2
+    shift
+    goto :next_arg
+)
+
 :set_dry_run
 if "%1" == "--dry" (
     set dry=true
@@ -167,7 +179,8 @@ set xcopy_exe=xcopy.exe
 rem Have to re-set the options for whatever reason.
 set xcopy_opts=
 set xcopy_opts=%xcopy_opts% /Y /F
-set xcopy_destination_dir=G:\Dev\NuGet\local\packages
+if "%xcopy_destination_drive%" == "" set xcopy_destination_drive=F:
+set xcopy_destination_dir=%xcopy_destination_drive%\Dev\NuGet\local\packages
 
 rem Expecting NuGet to be found in the System Path.
 set nuget_exe=NuGet.exe
